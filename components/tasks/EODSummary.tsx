@@ -1,9 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CheckCircle2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import type { Task } from "@/types";
-import { getUserById, getClientById, getProjectById } from "@/lib/mockData";
+import {
+  getCurrentUser,
+  getClientById,
+  getProjectById,
+} from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
@@ -18,18 +23,26 @@ const PRIORITY_STYLES: Record<string, string> = {
   low: "bg-blue-100 text-blue-700 border-blue-200",
 };
 
-function CompletedItem({ task }: { task: Task }) {
-  const completedBy = task.completed_by ? getUserById(task.completed_by) : null;
-  const clientName = task.client_id ? getClientById(task.client_id)?.name : null;
-  const projectName = task.project_id ? getProjectById(task.project_id)?.name : null;
+interface TaskDetails {
+  completedByName: string | null;
+  clientName: string | null;
+  projectName: string | null;
+}
 
+function CompletedItem({
+  task,
+  details,
+}: {
+  task: Task;
+  details: TaskDetails | null;
+}) {
   return (
     <div className="flex items-start gap-3 py-2">
       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <span className="text-sm">{task.content}</span>
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-          {completedBy && <span>{completedBy.name}</span>}
+          {details?.completedByName && <span>{details.completedByName}</span>}
           {task.completed_at && (
             <>
               <span>·</span>
@@ -41,14 +54,14 @@ function CompletedItem({ task }: { task: Task }) {
               {task.priority}
             </Badge>
           )}
-          {clientName && (
+          {details?.clientName && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
-              {clientName}
+              {details.clientName}
             </Badge>
           )}
-          {projectName && (
+          {details?.projectName && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
-              {projectName}
+              {details.projectName}
             </Badge>
           )}
         </div>
@@ -72,6 +85,38 @@ export function EODSummary({ tasks }: EODSummaryProps) {
     .sort((a, b) => (a.completed_at ?? "").localeCompare(b.completed_at ?? ""));
   const pending = tasks.filter((t) => !t.is_completed);
 
+  const [detailsMap, setDetailsMap] = useState<Record<string, TaskDetails>>({});
+  const completedIds = completed.map((t) => t.id).join(",");
+
+  useEffect(() => {
+    if (completed.length === 0) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      const map: Record<string, TaskDetails> = {};
+      for (const t of completed) {
+        const [user, client, project] = await Promise.all([
+          t.completed_by ? getCurrentUser(t.completed_by) : null,
+          t.client_id ? getClientById(t.client_id) : null,
+          t.project_id ? getProjectById(t.project_id) : null,
+        ]);
+        if (cancelled) return;
+        map[t.id] = {
+          completedByName: user?.name ?? null,
+          clientName: client?.name ?? null,
+          projectName: project?.name ?? null,
+        };
+      }
+      if (!cancelled) setDetailsMap(map);
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [completedIds, completed]);
+
   if (tasks.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-muted-foreground">
@@ -82,7 +127,6 @@ export function EODSummary({ tasks }: EODSummaryProps) {
 
   return (
     <div className="space-y-4">
-      {/* Completed */}
       {completed.length > 0 && (
         <div>
           <h4 className="mb-1 flex items-center gap-2 text-sm font-medium text-green-700">
@@ -91,7 +135,7 @@ export function EODSummary({ tasks }: EODSummaryProps) {
           </h4>
           <div className="divide-y">
             {completed.map((t) => (
-              <CompletedItem key={t.id} task={t} />
+              <CompletedItem key={t.id} task={t} details={detailsMap[t.id] ?? null} />
             ))}
           </div>
         </div>
@@ -99,7 +143,6 @@ export function EODSummary({ tasks }: EODSummaryProps) {
 
       {completed.length > 0 && pending.length > 0 && <Separator />}
 
-      {/* Pending */}
       {pending.length > 0 && (
         <div>
           <h4 className="mb-1 flex items-center gap-2 text-sm font-medium text-amber-600">

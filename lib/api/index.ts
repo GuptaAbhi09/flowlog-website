@@ -1,15 +1,20 @@
 // ---------------------------------------------------------------------------
-// Work OS – Mock API Layer
+// Work OS – API Layer (Supabase)
 // ---------------------------------------------------------------------------
 // All data access flows through this module. Components import from
-// `@/lib/api` and never touch mock data directly.
-//
-// When migrating to Supabase, replace the implementations in each file
-// while keeping the same function signatures.
+// `@/lib/api` only.
 // ---------------------------------------------------------------------------
 
 // Auth
-export { login, getCurrentUser } from "./auth";
+export {
+  login,
+  signUp,
+  getCurrentUser,
+  getProfiles,
+  updateProfile,
+  updatePassword,
+  logoutSupabase,
+} from "./auth";
 
 // Day Logs
 export {
@@ -35,10 +40,25 @@ export {
 } from "./tasks";
 
 // Clients
-export { getClients, getClientDetail, getClientActivity } from "./clients";
+export {
+  getClients,
+  getClientById,
+  getClientDetail,
+  getClientActivity,
+  createClient,
+  updateClient,
+  addClientMember,
+  removeClientMember,
+} from "./clients";
 
 // Projects
-export { getProjects, getProjectDetail } from "./projects";
+export {
+  getProjects,
+  getProjectById,
+  getProjectDetail,
+  createProject,
+  updateProject,
+} from "./projects";
 
 // Meetings
 export {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { GripVertical, Pencil, Trash2, Check, X } from "lucide-react";
+import { GripVertical, Pencil, Trash2, Check, X, Settings2 } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { Task, TaskPriority } from "@/types";
@@ -18,6 +18,7 @@ interface TaskItemProps {
   onToggle: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onUpdate: (taskId: string, content: string) => void;
+  onEditDetails?: () => void;
   readonly?: boolean;
 }
 
@@ -34,6 +35,7 @@ export function TaskItem({
   onToggle,
   onDelete,
   onUpdate,
+  onEditDetails,
   readonly = false,
 }: TaskItemProps) {
   const [editing, setEditing] = useState(false);
@@ -157,6 +159,17 @@ export function TaskItem({
       {/* Actions */}
       {!readonly && !editing && (
         <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+          {onEditDetails && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-muted-foreground"
+              onClick={onEditDetails}
+              title="Client / Project / Priority"
+            >
+              <Settings2 className="h-3 w-3" />
+            </Button>
+          )}
           <Button
             size="icon"
             variant="ghost"

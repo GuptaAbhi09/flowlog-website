@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -15,15 +16,17 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import type { Task } from "@/types";
-import { getClientById, getProjectById } from "@/lib/mockData";
+import type { Task, UpdateTask, Client, Project } from "@/types";
+import { getClientById, getProjectById, getClients, getProjects } from "@/lib/api";
 import { TaskItem } from "./TaskItem";
+import { EditTaskDialog } from "./EditTaskDialog";
 
 interface TaskListProps {
   tasks: Task[];
   onToggle: (taskId: string) => void;
   onDelete: (taskId: string) => void;
   onUpdate: (taskId: string, content: string) => void;
+  onUpdateTask?: (taskId: string, updates: UpdateTask) => void;
   onReorder: (orderedIds: string[]) => void;
   readonly?: boolean;
 }
@@ -33,9 +36,55 @@ export function TaskList({
   onToggle,
   onDelete,
   onUpdate,
+  onUpdateTask,
   onReorder,
   readonly = false,
 }: TaskListProps) {
+  const [namesMap, setNamesMap] = useState<Record<string, { clientName: string | null; projectName: string | null }>>({});
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const tasksKey = tasks.map((t) => `${t.id}-${t.client_id}-${t.project_id}`).join(",");
+
+  useEffect(() => {
+    if (tasks.length === 0) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      const map: Record<string, { clientName: string | null; projectName: string | null }> = {};
+      for (const t of tasks) {
+        const [client, project] = await Promise.all([
+          t.client_id ? getClientById(t.client_id) : null,
+          t.project_id ? getProjectById(t.project_id) : null,
+        ]);
+        if (cancelled) return;
+        map[t.id] = {
+          clientName: client?.name ?? null,
+          projectName: project?.name ?? null,
+        };
+      }
+      if (!cancelled) setNamesMap(map);
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [tasksKey, tasks]);
+
+  useEffect(() => {
+    if (!onUpdateTask) return;
+    let cancelled = false;
+    Promise.all([getClients(), getProjects()]).then(([c, p]) => {
+      if (!cancelled) {
+        setClients(c);
+        setProjects(p);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [onUpdateTask]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, {
@@ -67,6 +116,7 @@ export function TaskList({
   }
 
   return (
+    <>
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
@@ -78,20 +128,40 @@ export function TaskList({
         strategy={verticalListSortingStrategy}
       >
         <div className="flex flex-col gap-2">
-          {tasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              clientName={task.client_id ? getClientById(task.client_id)?.name : null}
-              projectName={task.project_id ? getProjectById(task.project_id)?.name : null}
-              onToggle={onToggle}
-              onDelete={onDelete}
-              onUpdate={onUpdate}
-              readonly={readonly}
-            />
-          ))}
+          {tasks.map((task) => {
+            const names = namesMap[task.id];
+            return (
+              <TaskItem
+                key={task.id}
+                task={task}
+                clientName={names?.clientName ?? null}
+                projectName={names?.projectName ?? null}
+                onToggle={onToggle}
+                onDelete={onDelete}
+                onUpdate={onUpdate}
+                onEditDetails={onUpdateTask ? () => setEditingTaskId(task.id) : undefined}
+                readonly={readonly}
+              />
+            );
+          })}
         </div>
       </SortableContext>
     </DndContext>
+    {onUpdateTask && (
+      <EditTaskDialog
+        task={editingTaskId ? tasks.find((t) => t.id === editingTaskId) ?? null : null}
+        clients={clients}
+        projects={projects}
+        open={!!editingTaskId}
+        onOpenChange={(open) => !open && setEditingTaskId(null)}
+        onSaved={(updates) => {
+          if (editingTaskId) {
+            onUpdateTask(editingTaskId, updates);
+            setEditingTaskId(null);
+          }
+        }}
+      />
+    )}
+  </>
   );
 }

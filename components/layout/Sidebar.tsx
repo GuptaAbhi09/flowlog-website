@@ -9,6 +9,7 @@ import {
   MessageSquare,
   Inbox,
   Clock,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
@@ -17,10 +18,11 @@ import { Badge } from "@/components/ui/badge";
 const NAV_ITEMS = [
   { label: "Daily", href: "/daily", icon: CalendarDays },
   { label: "Clients", href: "/clients", icon: Building2 },
-  { label: "Projects", href: "/clients", icon: FolderKanban, hidden: true },
+  { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Meetings", href: "/meetings", icon: MessageSquare },
   { label: "Inbox", href: "/inbox", icon: Inbox, hasBadge: true },
   { label: "Timeline", href: "/timeline", icon: Clock },
+  { label: "Settings", href: "/settings", icon: Settings },
 ] as const;
 
 interface SidebarNavProps {

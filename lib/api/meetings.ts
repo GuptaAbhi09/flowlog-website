@@ -1,29 +1,39 @@
 import type { Meeting, CreateMeeting, UpdateMeeting } from "@/types";
-import { meetings } from "@/lib/mockData";
-import { delay, generateId } from "./helpers";
+import { supabase } from "@/lib/supabaseClient";
 
 /** List all meetings, most recent first. */
 export async function getMeetings(): Promise<Meeting[]> {
-  const sorted = [...meetings].sort((a, b) =>
-    b.meeting_date.localeCompare(a.meeting_date),
-  );
-  return delay(sorted);
+  const { data, error } = await supabase
+    .from("meetings")
+    .select("*")
+    .order("meeting_date", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Meeting[];
 }
 
 /** Get a single meeting by ID. */
 export async function getMeetingById(id: string): Promise<Meeting | null> {
-  return delay(meetings.find((m) => m.id === id) ?? null);
+  const { data, error } = await supabase
+    .from("meetings")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) return null;
+  return data as Meeting | null;
 }
 
 /** Create a new meeting. */
 export async function createMeeting(data: CreateMeeting): Promise<Meeting> {
-  const meeting: Meeting = {
-    ...data,
-    id: generateId("meet"),
-    created_at: new Date().toISOString(),
-  };
-  meetings.push(meeting);
-  return delay(meeting);
+  const { data: meeting, error } = await supabase
+    .from("meetings")
+    .insert(data)
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return meeting as Meeting;
 }
 
 /** Update an existing meeting. */
@@ -31,9 +41,13 @@ export async function updateMeeting(
   id: string,
   updates: UpdateMeeting,
 ): Promise<Meeting | null> {
-  const idx = meetings.findIndex((m) => m.id === id);
-  if (idx === -1) return delay(null);
+  const { data, error } = await supabase
+    .from("meetings")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .maybeSingle();
 
-  meetings[idx] = { ...meetings[idx], ...updates };
-  return delay(meetings[idx]);
+  if (error) return null;
+  return data as Meeting | null;
 }

@@ -1,19 +1,20 @@
 import type { Task, CreateTask, UpdateTask } from "@/types";
-import { tasks, dayLogs, getClientByName, getProjectByName } from "@/lib/mockData";
+import { supabase } from "@/lib/supabaseClient";
 import { parseTaskInput } from "@/lib/parsers/taskParser";
-import { delay, generateId } from "./helpers";
+import { getClientByName } from "./clients";
+import { getProjectByName } from "./projects";
 import { getOrCreateTodayLog } from "./dayLogs";
-
-// ---------------------------------------------------------------------------
-// Queries
-// ---------------------------------------------------------------------------
 
 /** All tasks for a given day log, sorted by position. */
 export async function getTasksByDayLogId(dayLogId: string): Promise<Task[]> {
-  const result = tasks
-    .filter((t) => t.day_log_id === dayLogId)
-    .sort((a, b) => a.position - b.position);
-  return delay(result);
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("day_log_id", dayLogId)
+    .order("position", { ascending: true });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Task[];
 }
 
 /** All tasks for a user on a given date. */
@@ -21,8 +22,14 @@ export async function getTasksByDate(
   userId: string,
   date: string,
 ): Promise<Task[]> {
-  const log = dayLogs.find((d) => d.user_id === userId && d.date === date);
-  if (!log) return delay([]);
+  const { data: log } = await supabase
+    .from("day_logs")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("date", date)
+    .maybeSingle();
+
+  if (!log) return [];
   return getTasksByDayLogId(log.id);
 }
 
@@ -30,25 +37,31 @@ export async function getTasksByDate(
 export async function getCompletedTasksByClient(
   clientId: string,
 ): Promise<Task[]> {
-  const result = tasks
-    .filter((t) => t.client_id === clientId && t.is_completed)
-    .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
-  return delay(result);
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("client_id", clientId)
+    .eq("is_completed", true)
+    .order("completed_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Task[];
 }
 
 /** All completed tasks for a given project. */
 export async function getCompletedTasksByProject(
   projectId: string,
 ): Promise<Task[]> {
-  const result = tasks
-    .filter((t) => t.project_id === projectId && t.is_completed)
-    .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
-  return delay(result);
-}
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("project_id", projectId)
+    .eq("is_completed", true)
+    .order("completed_at", { ascending: false });
 
-// ---------------------------------------------------------------------------
-// Mutations
-// ---------------------------------------------------------------------------
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Task[];
+}
 
 /**
  * Create a task from raw user input.
@@ -63,56 +76,71 @@ export async function createTaskFromInput(
   const parsed = parseTaskInput(rawInput);
 
   const client = parsed.clientName
-    ? getClientByName(parsed.clientName)
-    : undefined;
+    ? await getClientByName(parsed.clientName)
+    : null;
   const project = parsed.projectName
-    ? getProjectByName(parsed.projectName)
-    : undefined;
+    ? await getProjectByName(parsed.projectName)
+    : null;
 
-  const existingTasks = tasks.filter((t) => t.day_log_id === dayLogId);
-  const maxPos = existingTasks.length > 0
-    ? Math.max(...existingTasks.map((t) => t.position))
-    : -1;
+  const { data: existing } = await supabase
+    .from("tasks")
+    .select("position")
+    .eq("day_log_id", dayLogId)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  const task: Task = {
-    id: generateId("task"),
-    content: rawInput,
-    day_log_id: dayLogId,
-    user_id: userId,
-    client_id: client?.id ?? null,
-    project_id: project?.id ?? null,
-    priority: parsed.priority,
-    is_completed: false,
-    completed_at: null,
-    completed_by: null,
-    position: maxPos + 1,
-    source,
-    created_at: new Date().toISOString(),
-  };
+  const maxPos = (existing as { position?: number } | null)?.position ?? -1;
 
-  tasks.push(task);
-  return delay(task);
+  const { data: task, error } = await supabase
+    .from("tasks")
+    .insert({
+      content: rawInput,
+      day_log_id: dayLogId,
+      user_id: userId,
+      client_id: client?.id ?? null,
+      project_id: project?.id ?? null,
+      priority: parsed.priority,
+      is_completed: false,
+      completed_at: null,
+      completed_by: null,
+      position: maxPos + 1,
+      source,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return task as Task;
 }
 
 /** Create a task with explicit fields (used by inbox conversion, etc.). */
 export async function createTask(data: CreateTask): Promise<Task> {
-  const existingTasks = tasks.filter((t) => t.day_log_id === data.day_log_id);
-  const maxPos = existingTasks.length > 0
-    ? Math.max(...existingTasks.map((t) => t.position))
-    : -1;
+  const { data: existing } = await supabase
+    .from("tasks")
+    .select("position")
+    .eq("day_log_id", data.day_log_id)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-  const task: Task = {
-    ...data,
-    id: generateId("task"),
-    is_completed: false,
-    completed_at: null,
-    completed_by: null,
-    position: data.position ?? maxPos + 1,
-    created_at: new Date().toISOString(),
-  };
+  const maxPos = (existing as { position?: number } | null)?.position ?? -1;
+  const position = data.position ?? maxPos + 1;
 
-  tasks.push(task);
-  return delay(task);
+  const { data: task, error } = await supabase
+    .from("tasks")
+    .insert({
+      ...data,
+      is_completed: false,
+      completed_at: null,
+      completed_by: null,
+      position,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error(error.message);
+  return task as Task;
 }
 
 /** Update any mutable field on a task. */
@@ -120,11 +148,15 @@ export async function updateTask(
   taskId: string,
   updates: UpdateTask,
 ): Promise<Task | null> {
-  const idx = tasks.findIndex((t) => t.id === taskId);
-  if (idx === -1) return delay(null);
+  const { data, error } = await supabase
+    .from("tasks")
+    .update(updates)
+    .eq("id", taskId)
+    .select()
+    .maybeSingle();
 
-  tasks[idx] = { ...tasks[idx], ...updates };
-  return delay(tasks[idx]);
+  if (error) return null;
+  return data as Task | null;
 }
 
 /** Mark a task complete (or uncomplete). */
@@ -132,28 +164,35 @@ export async function toggleTaskComplete(
   taskId: string,
   userId: string,
 ): Promise<Task | null> {
-  const idx = tasks.findIndex((t) => t.id === taskId);
-  if (idx === -1) return delay(null);
+  const { data: current, error: fetchError } = await supabase
+    .from("tasks")
+    .select("is_completed")
+    .eq("id", taskId)
+    .single();
 
-  const task = tasks[idx];
-  const nowCompleted = !task.is_completed;
+  if (fetchError || !current) return null;
 
-  tasks[idx] = {
-    ...task,
-    is_completed: nowCompleted,
-    completed_at: nowCompleted ? new Date().toISOString() : null,
-    completed_by: nowCompleted ? userId : null,
-  };
+  const nowCompleted = !(current as Task).is_completed;
 
-  return delay(tasks[idx]);
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({
+      is_completed: nowCompleted,
+      completed_at: nowCompleted ? new Date().toISOString() : null,
+      completed_by: nowCompleted ? userId : null,
+    })
+    .eq("id", taskId)
+    .select()
+    .maybeSingle();
+
+  if (error) return null;
+  return data as Task | null;
 }
 
 /** Delete a task. */
 export async function deleteTask(taskId: string): Promise<boolean> {
-  const idx = tasks.findIndex((t) => t.id === taskId);
-  if (idx === -1) return delay(false);
-  tasks.splice(idx, 1);
-  return delay(true);
+  const { error } = await supabase.from("tasks").delete().eq("id", taskId);
+  return !error;
 }
 
 /** Reorder tasks within a day log by providing the new ordered list of IDs. */
@@ -161,15 +200,11 @@ export async function reorderTasks(
   dayLogId: string,
   orderedIds: string[],
 ): Promise<Task[]> {
-  orderedIds.forEach((id, position) => {
-    const idx = tasks.findIndex(
-      (t) => t.id === id && t.day_log_id === dayLogId,
-    );
-    if (idx !== -1) {
-      tasks[idx] = { ...tasks[idx], position };
-    }
-  });
-
+  await Promise.all(
+    orderedIds.map((id, position) =>
+      supabase.from("tasks").update({ position }).eq("id", id).eq("day_log_id", dayLogId),
+    ),
+  );
   return getTasksByDayLogId(dayLogId);
 }
 
@@ -183,23 +218,41 @@ export async function rollPendingToToday(
 ): Promise<Task[]> {
   const todayLog = await getOrCreateTodayLog(userId);
 
-  const pending = tasks.filter(
-    (t) => t.day_log_id === sourceDayLogId && !t.is_completed,
-  );
+  const { data: pending, error: fetchErr } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("day_log_id", sourceDayLogId)
+    .eq("is_completed", false);
 
-  const newTasks: Task[] = [];
+  if (fetchErr) throw new Error(fetchErr.message);
+  if (!pending?.length) return [];
 
-  for (const original of pending) {
-    const copied: Task = {
-      ...original,
-      id: generateId("task"),
-      day_log_id: todayLog.id,
-      position: tasks.filter((t) => t.day_log_id === todayLog.id).length,
-      created_at: new Date().toISOString(),
-    };
-    tasks.push(copied);
-    newTasks.push(copied);
-  }
+  const { count } = await supabase
+    .from("tasks")
+    .select("*", { count: "exact", head: true })
+    .eq("day_log_id", todayLog.id);
 
-  return delay(newTasks);
+  let nextPos = count ?? 0;
+
+  const inserts = (pending as Task[]).map((t) => ({
+    content: t.content,
+    day_log_id: todayLog.id,
+    user_id: t.user_id,
+    client_id: t.client_id,
+    project_id: t.project_id,
+    priority: t.priority,
+    is_completed: false,
+    completed_at: null,
+    completed_by: null,
+    position: nextPos++,
+    source: t.source,
+  }));
+
+  const { data: newTasks, error: insertErr } = await supabase
+    .from("tasks")
+    .insert(inserts)
+    .select();
+
+  if (insertErr) throw new Error(insertErr.message);
+  return (newTasks ?? []) as Task[];
 }

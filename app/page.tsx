@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,8 +16,8 @@ import { useStore } from "@/store/useStore";
 import { login } from "@/lib/api";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("rahul@workos.dev");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -96,7 +97,10 @@ export default function LoginPage() {
             </Button>
 
             <p className="text-center text-xs text-muted-foreground">
-              Demo accounts: rahul@workos.dev, abhishek@workos.dev, aman@workos.dev
+              Don&apos;t have an account?{" "}
+              <Link href="/register" className="font-medium text-primary underline underline-offset-2">
+                Register
+              </Link>
             </p>
           </form>
         </CardContent>

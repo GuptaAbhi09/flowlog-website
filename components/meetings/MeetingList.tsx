@@ -1,17 +1,44 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { format, parseISO } from "date-fns";
 import { CalendarDays, Building2 } from "lucide-react";
 import type { Meeting } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
-import { getClientById } from "@/lib/mockData";
+import { getClientById } from "@/lib/api";
 
 interface MeetingListProps {
   meetings: Meeting[];
 }
 
 export function MeetingList({ meetings }: MeetingListProps) {
+  const [clientNames, setClientNames] = useState<Record<string, string>>({});
+
+  const meetingIds = meetings.map((m) => m.id).join(",");
+
+  useEffect(() => {
+    if (meetings.length === 0) return;
+
+    let cancelled = false;
+
+    const load = async () => {
+      const map: Record<string, string> = {};
+      for (const m of meetings) {
+        if (!m.client_id) continue;
+        const client = await getClientById(m.client_id);
+        if (cancelled) return;
+        if (client) map[m.id] = client.name;
+      }
+      if (!cancelled) setClientNames(map);
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [meetingIds, meetings]);
+
   if (meetings.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
@@ -23,9 +50,7 @@ export function MeetingList({ meetings }: MeetingListProps) {
   return (
     <div className="space-y-2">
       {meetings.map((meeting) => {
-        const client = meeting.client_id
-          ? getClientById(meeting.client_id)
-          : null;
+        const clientName = meeting.client_id ? clientNames[meeting.id] : null;
 
         return (
           <Link key={meeting.id} href={`/meetings/${meeting.id}`}>
@@ -45,10 +70,10 @@ export function MeetingList({ meetings }: MeetingListProps) {
                         "EEE, MMM d • h:mm a",
                       )}
                     </span>
-                    {client && (
+                    {clientName && (
                       <span className="inline-flex items-center gap-1">
                         <Building2 className="h-3 w-3" />
-                        {client.name}
+                        {clientName}
                       </span>
                     )}
                   </div>
@@ -61,4 +86,3 @@ export function MeetingList({ meetings }: MeetingListProps) {
     </div>
   );
 }
-

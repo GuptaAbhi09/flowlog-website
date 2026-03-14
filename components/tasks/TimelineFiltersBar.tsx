@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import type { Client, Project, TimelineFilters } from "@/types";
 import { getClients, getProjects } from "@/lib/api";

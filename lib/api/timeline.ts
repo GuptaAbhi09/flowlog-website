@@ -1,47 +1,54 @@
 import type { TimelineEntry, TimelineFilters } from "@/types";
-import { tasks, getClientById, getProjectById, getUserById } from "@/lib/mockData";
-import { delay } from "./helpers";
+import { supabase } from "@/lib/supabaseClient";
+import { getClientById } from "./clients";
+import { getProjectById } from "./projects";
+import { getCurrentUser } from "./auth";
 
 /**
  * Global timeline of completed work.
- * All views (client activity, project timeline, EOD) derive from
- * the same task data — this is just a filtered, enriched projection.
+ * All views derive from the same task data — filtered, enriched projection.
  */
 export async function getTimeline(
   filters: TimelineFilters,
 ): Promise<TimelineEntry[]> {
-  let completed = tasks.filter((t) => t.is_completed && t.completed_at);
+  let query = supabase
+    .from("tasks")
+    .select("*")
+    .eq("is_completed", true)
+    .not("completed_at", "is", null)
+    .order("completed_at", { ascending: false });
 
-  if (filters.clientId) {
-    completed = completed.filter((t) => t.client_id === filters.clientId);
-  }
-  if (filters.projectId) {
-    completed = completed.filter((t) => t.project_id === filters.projectId);
-  }
-  if (filters.dateFrom) {
-    completed = completed.filter(
-      (t) => (t.completed_at ?? "") >= filters.dateFrom!,
-    );
-  }
-  if (filters.dateTo) {
-    const to = filters.dateTo + "T23:59:59.999Z";
-    completed = completed.filter((t) => (t.completed_at ?? "") <= to);
-  }
+  if (filters.clientId) query = query.eq("client_id", filters.clientId);
+  if (filters.projectId) query = query.eq("project_id", filters.projectId);
+  if (filters.dateFrom)
+    query = query.gte("completed_at", filters.dateFrom);
+  if (filters.dateTo)
+    query = query.lte("completed_at", `${filters.dateTo}T23:59:59.999Z`);
 
-  const entries: TimelineEntry[] = completed
-    .sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""))
-    .map((task) => ({
-      task,
-      clientName: task.client_id
-        ? getClientById(task.client_id)?.name ?? null
-        : null,
-      projectName: task.project_id
-        ? getProjectById(task.project_id)?.name ?? null
-        : null,
-      completedByName:
-        getUserById(task.completed_by ?? "")?.name ?? "Unknown",
-      date: task.completed_at?.slice(0, 10) ?? "",
-    }));
+  const { data: tasks, error } = await query;
 
-  return delay(entries);
+  if (error) throw new Error(error.message);
+  const list = (tasks ?? []) as TimelineEntry["task"][];
+
+  const entries: TimelineEntry[] = await Promise.all(
+    list.map(async (task) => {
+      const clientName = task.client_id
+        ? (await getClientById(task.client_id))?.name ?? null
+        : null;
+      const projectName = task.project_id
+        ? (await getProjectById(task.project_id))?.name ?? null
+        : null;
+      const u = await getCurrentUser(task.completed_by ?? "");
+      const completedByName = u?.name ?? "Unknown";
+      return {
+        task,
+        clientName,
+        projectName,
+        completedByName,
+        date: task.completed_at?.slice(0, 10) ?? "",
+      };
+    }),
+  );
+
+  return entries;
 }

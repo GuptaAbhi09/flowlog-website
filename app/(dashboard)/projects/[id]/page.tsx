@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, FolderKanban, Building2 } from "lucide-react";
+import { ArrowLeft, FolderKanban, Building2, Pencil } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { ProjectWithTasks } from "@/types";
 import { getProjectDetail } from "@/lib/api";
@@ -10,12 +10,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProjectStatusBadge } from "@/components/projects/ProjectStatusBadge";
 import { ProjectTimeline } from "@/components/projects/ProjectTimeline";
+import { EditProjectDialog } from "@/components/projects/EditProjectDialog";
 
 export default function ProjectDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const [data, setData] = useState<ProjectWithTasks | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editOpen, setEditOpen] = useState(false);
+
+  const refresh = useCallback(() => {
+    getProjectDetail(params.id).then((result) => setData(result));
+  }, [params.id]);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +80,14 @@ export default function ProjectDetailPage() {
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold">{project.name}</h1>
             <ProjectStatusBadge status={project.status} />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setEditOpen(true)}
+              title="Edit project"
+            >
+              <Pencil className="h-4 w-4" />
+            </Button>
           </div>
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span className="inline-flex items-center gap-1">
@@ -97,6 +111,13 @@ export default function ProjectDetailPage() {
           <ProjectTimeline tasks={tasks} />
         </CardContent>
       </Card>
+
+      <EditProjectDialog
+        project={project}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onSaved={refresh}
+      />
     </div>
   );
 }

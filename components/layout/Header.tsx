@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useStore } from "@/store/useStore";
+import { logoutSupabase } from "@/lib/api";
 import { SidebarNav } from "./Sidebar";
 
 function getInitials(name: string): string {
@@ -38,7 +39,8 @@ export function Header() {
   const logout = useStore((s) => s.logout);
   const router = useRouter();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await logoutSupabase();
     logout();
     router.push("/");
   };
@@ -88,9 +90,11 @@ export function Header() {
                 <p className="text-xs text-muted-foreground">{user.email}</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem disabled>
-                <UserIcon className="mr-2 h-4 w-4" />
-                Profile
+              <DropdownMenuItem asChild>
+                <Link href="/settings">
+                  <UserIcon className="mr-2 h-4 w-4" />
+                  Settings
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>

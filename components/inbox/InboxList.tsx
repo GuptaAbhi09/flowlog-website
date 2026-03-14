@@ -1,16 +1,30 @@
+"use client";
+
+import { useState } from "react";
 import { format, parseISO } from "date-fns";
-import { ArrowRight, CheckCircle2, Trash2 } from "lucide-react";
+import { ArrowRight, CheckCircle2, Trash2, Pencil, CheckCircle } from "lucide-react";
 import type { InboxItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { EditInboxItemDialog } from "./EditInboxItemDialog";
 
 interface InboxListProps {
   items: InboxItem[];
   onConvert: (id: string) => void;
   onDelete: (id: string) => void;
+  onEdit?: (id: string, content: string) => void;
+  onMarkProcessed?: (id: string) => void;
 }
 
-export function InboxList({ items, onConvert, onDelete }: InboxListProps) {
+export function InboxList({
+  items,
+  onConvert,
+  onDelete,
+  onEdit,
+  onMarkProcessed,
+}: InboxListProps) {
+  const [editingItem, setEditingItem] = useState<InboxItem | null>(null);
+
   if (items.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
@@ -37,7 +51,30 @@ export function InboxList({ items, onConvert, onDelete }: InboxListProps) {
                 {format(parseISO(item.created_at), "EEE, MMM d • h:mm a")}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-wrap items-center justify-end gap-1">
+              {onEdit && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-muted-foreground"
+                  onClick={() => setEditingItem(item)}
+                  title="Edit"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              {!item.is_processed && onMarkProcessed && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => onMarkProcessed(item.id)}
+                  title="Mark as done"
+                >
+                  <CheckCircle className="h-3.5 w-3.5" />
+                  Done
+                </Button>
+              )}
               {!item.is_processed && (
                 <Button
                   size="sm"
@@ -52,6 +89,7 @@ export function InboxList({ items, onConvert, onDelete }: InboxListProps) {
                 variant="ghost"
                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
                 onClick={() => onDelete(item.id)}
+                title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />
               </Button>
@@ -59,6 +97,17 @@ export function InboxList({ items, onConvert, onDelete }: InboxListProps) {
           </CardContent>
         </Card>
       ))}
+      <EditInboxItemDialog
+        item={editingItem}
+        open={!!editingItem}
+        onOpenChange={(open) => !open && setEditingItem(null)}
+        onSaved={(content) => {
+          if (editingItem) {
+            onEdit?.(editingItem.id, content);
+            setEditingItem(null);
+          }
+        }}
+      />
     </div>
   );
 }

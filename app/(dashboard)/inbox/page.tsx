@@ -6,6 +6,7 @@ import type { InboxItem } from "@/types";
 import {
   getInboxItems,
   createInboxItem,
+  updateInboxItem,
   deleteInboxItem,
   convertInboxToTask,
   getUnprocessedCount,
@@ -63,6 +64,16 @@ export default function InboxPage() {
     await loadItems();
   };
 
+  const handleEdit = async (id: string, content: string) => {
+    await updateInboxItem(id, { content });
+    await loadItems();
+  };
+
+  const handleMarkProcessed = async (id: string) => {
+    await updateInboxItem(id, { is_processed: true });
+    await loadItems();
+  };
+
   if (loading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -99,6 +110,8 @@ export default function InboxPage() {
             items={items}
             onConvert={handleConvert}
             onDelete={handleDelete}
+            onEdit={handleEdit}
+            onMarkProcessed={handleMarkProcessed}
           />
         </CardContent>
       </Card>

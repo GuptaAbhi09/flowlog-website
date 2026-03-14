@@ -3,9 +3,12 @@
 import type { ClientMember } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { UserMinus } from "lucide-react";
 
 interface ClientTeamProps {
   members: (ClientMember & { userName: string })[];
+  onRemoveMember?: (memberId: string) => void;
 }
 
 function getInitials(name: string): string {
@@ -17,7 +20,7 @@ function getInitials(name: string): string {
     .slice(0, 2);
 }
 
-export function ClientTeam({ members }: ClientTeamProps) {
+export function ClientTeam({ members, onRemoveMember }: ClientTeamProps) {
   if (members.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
@@ -44,6 +47,17 @@ export function ClientTeam({ members }: ClientTeamProps) {
           >
             {member.role}
           </Badge>
+          {onRemoveMember && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onRemoveMember(member.id)}
+              title="Remove member"
+            >
+              <UserMinus className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       ))}
     </div>

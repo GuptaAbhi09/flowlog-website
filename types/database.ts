@@ -29,6 +29,8 @@ export interface User {
 export interface Client {
   id: string;
   name: string;
+  /** Set when RLS is enabled; creator has access before being added as member. */
+  created_by: string | null;
   created_at: string;
 }
 

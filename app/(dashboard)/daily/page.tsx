@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { format, isToday, parseISO } from "date-fns";
 import { CalendarDays, RotateCcw } from "lucide-react";
 import { useStore } from "@/store/useStore";
-import type { DayLog, Task } from "@/types";
+import type { DayLog, Task, UpdateTask } from "@/types";
 import {
   getOrCreateTodayLog,
   getDayLogByDate,
@@ -82,6 +82,11 @@ export default function DailyPage() {
 
   const handleUpdate = async (taskId: string, content: string) => {
     await updateTask(taskId, { content });
+    if (currentLog) await loadTasks(currentLog.id);
+  };
+
+  const handleUpdateTask = async (taskId: string, updates: UpdateTask) => {
+    await updateTask(taskId, updates);
     if (currentLog) await loadTasks(currentLog.id);
   };
 
@@ -206,6 +211,7 @@ export default function DailyPage() {
             onToggle={handleToggle}
             onDelete={handleDelete}
             onUpdate={handleUpdate}
+            onUpdateTask={isViewingToday ? handleUpdateTask : undefined}
             onReorder={handleReorder}
             readonly={!isViewingToday}
           />

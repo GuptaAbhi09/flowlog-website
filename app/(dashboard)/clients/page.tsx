@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Building2 } from "lucide-react";
 import type { Client, Project } from "@/types";
 import { getClients, getProjects } from "@/lib/api";
 import { ClientCard } from "@/components/clients/ClientCard";
+import { CreateClientDialog } from "@/components/clients/CreateClientDialog";
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(() => {
+    Promise.all([getClients(), getProjects()]).then(([c, p]) => {
+      setClients(c);
+      setProjects(p);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -33,11 +41,14 @@ export default function ClientsPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Clients</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {clients.length} client{clients.length !== 1 ? "s" : ""}
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Clients</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {clients.length} client{clients.length !== 1 ? "s" : ""}
+          </p>
+        </div>
+        <CreateClientDialog onCreated={refresh} />
       </div>
 
       {clients.length === 0 ? (
