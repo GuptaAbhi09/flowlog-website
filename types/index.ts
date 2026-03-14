@@ -32,6 +32,7 @@ export interface ClientWithProjects {
   client: import("./database").Client;
   projects: import("./database").Project[];
   members: Array<import("./database").ClientMember & { userName: string }>;
+  currentRole: import("./database").UserRole | null;
 }
 
 export interface ProjectWithTasks {

@@ -12,9 +12,10 @@ import { createTaskFromInput } from "@/lib/api";
 
 interface MeetingNotesProps {
   meeting: Meeting;
+  onConverted?: () => void;
 }
 
-export function MeetingNotes({ meeting }: MeetingNotesProps) {
+export function MeetingNotes({ meeting, onConverted }: MeetingNotesProps) {
   const user = useStore((s) => s.user);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [converting, setConverting] = useState(false);
@@ -30,18 +31,32 @@ export function MeetingNotes({ meeting }: MeetingNotesProps) {
     setSelected((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
+  const [convertedCount, setConvertedCount] = useState<number | null>(null);
+
   const handleConvert = async () => {
     if (!user || selectedLines.length === 0) return;
     setConverting(true);
+    setConvertedCount(null);
     try {
       const dayLog = await getOrCreateTodayLog(user.id);
-      // Convert each selected line into a task in today's DayLog.
+      
       await Promise.all(
         selectedLines.map((line) =>
-          createTaskFromInput(line, user.id, dayLog.id, "meeting"),
+          createTaskFromInput(line, user.id, dayLog.id, "meeting", {
+            clientId: meeting.client_id ?? undefined,
+          }),
         ),
       );
-      // Keep notes intact; UI feedback is the responsibility of the Daily page.
+      
+      setConvertedCount(selectedLines.length);
+      setSelected({}); // Clear selection
+      onConverted?.(); // Notify parent to refresh tasks
+      
+      // Reset success message after 3 seconds
+      setTimeout(() => setConvertedCount(null), 3000);
+    } catch (err) {
+      console.error("Failed to convert tasks:", err);
+      alert("Failed to convert some tasks. Please try again.");
     } finally {
       setConverting(false);
     }
@@ -94,13 +109,20 @@ export function MeetingNotes({ meeting }: MeetingNotesProps) {
           className="w-full"
           size="sm"
           onClick={handleConvert}
-          disabled={!user || selectedLines.length === 0 || converting}
+          disabled={!user || (selectedLines.length === 0 && !convertedCount) || converting}
+          variant={convertedCount ? "outline" : "default"}
         >
-          {converting
-            ? "Converting to tasks…"
-            : `Convert ${selectedLines.length || ""} line${
-                selectedLines.length === 1 ? "" : "s"
-              } to tasks`}
+          {converting ? (
+            "Converting to tasks…"
+          ) : convertedCount ? (
+            <span className="text-green-600 flex items-center gap-2">
+              ✓ {convertedCount} tasks added to Today
+            </span>
+          ) : (
+            `Convert ${selectedLines.length || ""} line${
+              selectedLines.length === 1 ? "" : "s"
+            } to tasks`
+          )}
         </Button>
       </CardContent>
     </Card>

@@ -108,10 +108,14 @@ export async function getClientDetail(
     }),
   );
 
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  const currentRole = membersRows?.find(m => m.user_id === authUser?.id)?.role ?? null;
+
   return {
     client: client as Client,
     projects: (clientProjects ?? []) as ClientWithProjects["projects"],
     members,
+    currentRole,
   };
 }
 

@@ -11,9 +11,13 @@ import { getCurrentUser } from "./auth";
 export async function getTimeline(
   filters: TimelineFilters,
 ): Promise<TimelineEntry[]> {
+  const { data: { user: authUser } } = await supabase.auth.getUser();
+  if (!authUser) return [];
+
   let query = supabase
     .from("tasks")
     .select("*")
+    .eq("user_id", authUser.id)
     .eq("is_completed", true)
     .not("completed_at", "is", null)
     .order("completed_at", { ascending: false });

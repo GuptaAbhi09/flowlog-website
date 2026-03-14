@@ -4,11 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, CalendarDays, Building2, Pencil } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import type { Meeting } from "@/types";
-import { getMeetingById, getClientById } from "@/lib/api";
+import type { Meeting, Task } from "@/types";
+import { getMeetingById, getClientById, getTasksBySource } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { MeetingNotes } from "@/components/meetings/MeetingNotes";
 import { EditMeetingDialog } from "@/components/meetings/EditMeetingDialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClipboardList } from "lucide-react";
 
 export default function MeetingDetailPage() {
   const params = useParams<{ id: string }>();
@@ -18,8 +20,21 @@ export default function MeetingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [editOpen, setEditOpen] = useState(false);
 
-  const refresh = useCallback(() => {
-    getMeetingById(params.id).then(setMeeting);
+  const refresh = useCallback(async () => {
+    const data = await getMeetingById(params.id);
+    setMeeting(data);
+  }, [params.id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    getMeetingById(params.id).then((result) => {
+      if (!cancelled) {
+        setMeeting(result);
+        setLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
   }, [params.id]);
 
   useEffect(() => {
@@ -35,6 +50,31 @@ export default function MeetingDetailPage() {
       cancelled = true;
     };
   }, [meeting?.client_id]);
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksLoading, setTasksLoading] = useState(false);
+
+  const refreshTasks = useCallback(async () => {
+    if (!meeting?.client_id) return;
+    setTasksLoading(true);
+    try {
+      const result = await getTasksBySource("meeting", meeting.client_id);
+      setTasks(result);
+    } finally {
+      setTasksLoading(false);
+    }
+  }, [meeting?.client_id]);
+
+  useEffect(() => {
+    if (meeting?.client_id) {
+      refreshTasks();
+    }
+  }, [meeting?.client_id, refreshTasks]);
+
+  const refreshAll = useCallback(() => {
+    refresh();
+    refreshTasks();
+  }, [refresh, refreshTasks]);
 
   if (loading) {
     return (
@@ -105,12 +145,51 @@ export default function MeetingDetailPage() {
         </div>
       </div>
 
-      <MeetingNotes meeting={meeting} />
+      <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
+          <MeetingNotes meeting={meeting} onConverted={refreshTasks} />
+        </div>
+        
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-3 pt-4">
+              <CardTitle className="text-base flex items-center gap-2">
+                <ClipboardList className="h-4 w-4" />
+                Related Tasks
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {tasksLoading ? (
+                <p className="text-sm text-muted-foreground">Loading tasks...</p>
+              ) : tasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No tasks generated from meetings yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {tasks.map((task) => (
+                    <li key={task.id} className="flex items-start gap-3 rounded-lg border p-3 text-sm transition-colors hover:bg-muted/50">
+                      <div className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${task.is_completed ? "bg-green-500" : "bg-blue-500"}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className={task.is_completed ? "text-muted-foreground line-through" : ""}>
+                          {task.content}
+                        </p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {format(parseISO(task.created_at), "MMM d, h:mm a")}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <EditMeetingDialog
         meeting={meeting}
         open={editOpen}
         onOpenChange={setEditOpen}
-        onSaved={refresh}
+        onSaved={refreshAll}
       />
     </div>
   );

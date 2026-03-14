@@ -66,21 +66,28 @@ export async function getCompletedTasksByProject(
 /**
  * Create a task from raw user input.
  * Parses @Client #Project !priority tags automatically.
+ * Can take optional context (clientId, projectId) to use if not specified in input.
  */
 export async function createTaskFromInput(
   rawInput: string,
   userId: string,
   dayLogId: string,
   source: Task["source"] = "sod",
+  context?: { clientId?: string; projectId?: string },
 ): Promise<Task> {
   const parsed = parseTaskInput(rawInput);
 
-  const client = parsed.clientName
-    ? await getClientByName(parsed.clientName)
-    : null;
-  const project = parsed.projectName
-    ? await getProjectByName(parsed.projectName)
-    : null;
+  let client_id = context?.clientId ?? null;
+  let project_id = context?.projectId ?? null;
+
+  if (parsed.clientName) {
+    const c = await getClientByName(parsed.clientName);
+    if (c) client_id = c.id;
+  }
+  if (parsed.projectName) {
+    const p = await getProjectByName(parsed.projectName);
+    if (p) project_id = p.id;
+  }
 
   const { data: existing } = await supabase
     .from("tasks")
@@ -95,11 +102,11 @@ export async function createTaskFromInput(
   const { data: task, error } = await supabase
     .from("tasks")
     .insert({
-      content: rawInput,
+      content: parsed.content, // Use parsed content (tags removed)
       day_log_id: dayLogId,
       user_id: userId,
-      client_id: client?.id ?? null,
-      project_id: project?.id ?? null,
+      client_id,
+      project_id,
       priority: parsed.priority,
       is_completed: false,
       completed_at: null,
@@ -255,4 +262,22 @@ export async function rollPendingToToday(
 
   if (insertErr) throw new Error(insertErr.message);
   return (newTasks ?? []) as Task[];
+}
+
+/** Fetch tasks by source, optionally filtered by client or project. */
+export async function getTasksBySource(
+  source: Task["source"],
+  clientId?: string,
+): Promise<Task[]> {
+  let query = supabase
+    .from("tasks")
+    .select("*")
+    .eq("source", source)
+    .order("created_at", { ascending: false });
+
+  if (clientId) query = query.eq("client_id", clientId);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return (data ?? []) as Task[];
 }

@@ -105,6 +105,15 @@ export async function login(
 }
 
 /**
+ * Get the currently authenticated user's profile.
+ */
+export async function getSessionUser(): Promise<User | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  return getCurrentUser(user.id);
+}
+
+/**
  * Get app user by id from profiles table.
  */
 export async function getCurrentUser(userId: string): Promise<User | null> {

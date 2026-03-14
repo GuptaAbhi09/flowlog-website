@@ -2,10 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Building2, Plus, UserPlus } from "lucide-react";
+import { ArrowLeft, Building2, Plus, UserPlus, CheckCircle2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import type { ClientWithProjects } from "@/types";
-import { getClientDetail, removeClientMember } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,32 +11,46 @@ import { ClientProjects } from "@/components/clients/ClientProjects";
 import { ClientActivity } from "@/components/clients/ClientActivity";
 import { ClientTeam } from "@/components/clients/ClientTeam";
 import { EditClientButton } from "@/components/clients/EditClientDialog";
-import { AddMemberDialog } from "@/components/clients/AddMemberDialog";
+import { InviteMemberDialog } from "@/components/clients/InviteMemberDialog";
 import { CreateProjectDialog } from "@/components/projects/CreateProjectDialog";
+import { 
+  getClientDetail, 
+  removeClientMember, 
+  getInvitesByClient, 
+  declineInvite 
+} from "@/lib/api";
+import type { ClientInvite, ClientWithProjects } from "@/types";
+
+import { useSearchParams } from "next/navigation";
 
 export default function ClientDetailPage() {
   const params = useParams<{ id: string }>();
+  const searchParams = useSearchParams();
+  const accepted = searchParams.get("accepted") === "true";
   const router = useRouter();
   const [data, setData] = useState<ClientWithProjects | null>(null);
+  const [invites, setInvites] = useState<ClientInvite[]>([]);
   const [loading, setLoading] = useState(true);
-  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [createProjectOpen, setCreateProjectOpen] = useState(false);
 
-  const refresh = useCallback(() => {
-    getClientDetail(params.id).then((result) => setData(result));
+  const refreshData = useCallback(async () => {
+    const [clientResult, invitesResult] = await Promise.all([
+      getClientDetail(params.id),
+      getInvitesByClient(params.id)
+    ]);
+    setData(clientResult);
+    setInvites(invitesResult);
   }, [params.id]);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    getClientDetail(params.id).then((result) => {
-      if (!cancelled) {
-        setData(result);
-        setLoading(false);
-      }
+    refreshData().then(() => {
+      if (!cancelled) setLoading(false);
     });
     return () => { cancelled = true; };
-  }, [params.id]);
+  }, [refreshData]);
 
   if (loading) {
     return (
@@ -64,7 +76,12 @@ export default function ClientDetailPage() {
 
   async function handleRemoveMember(memberId: string) {
     const ok = await removeClientMember(memberId);
-    if (ok) refresh();
+    if (ok) refreshData();
+  }
+
+  async function handleCancelInvite(inviteId: string) {
+    await declineInvite(inviteId);
+    refreshData();
   }
 
   return (
@@ -88,13 +105,20 @@ export default function ClientDetailPage() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-2xl font-bold">{client.name}</h1>
-            <EditClientButton client={client} onSaved={refresh} />
+            <EditClientButton client={client} onSaved={refreshData} />
           </div>
           <p className="text-sm text-muted-foreground">
             Client since {format(parseISO(client.created_at), "MMMM yyyy")}
           </p>
         </div>
       </div>
+
+      {accepted && (
+        <div className="rounded-lg bg-green-500/10 p-3 text-sm text-green-600 flex items-center gap-2 border border-green-500/20 animate-in fade-in slide-in-from-top-1">
+          <CheckCircle2 className="h-4 w-4" />
+          You have successfully joined the team!
+        </div>
+      )}
 
       {/* Tabs */}
       <Tabs defaultValue="projects">
@@ -103,17 +127,21 @@ export default function ClientDetailPage() {
             Projects ({projects.length})
           </TabsTrigger>
           <TabsTrigger value="activity">Activity</TabsTrigger>
-          <TabsTrigger value="team">Team ({members.length})</TabsTrigger>
+          <TabsTrigger value="team">
+            Team ({members.length + invites.length})
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="projects" className="mt-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-base">Projects</CardTitle>
-              <Button size="sm" onClick={() => setCreateProjectOpen(true)}>
-                <Plus className="h-4 w-4" />
-                New project
-              </Button>
+              {data.currentRole === "owner" && (
+                <Button size="sm" onClick={() => setCreateProjectOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  New project
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <ClientProjects projects={projects} />
@@ -123,7 +151,7 @@ export default function ClientDetailPage() {
             clientId={client.id}
             open={createProjectOpen}
             onOpenChange={setCreateProjectOpen}
-            onCreated={refresh}
+            onCreated={refreshData}
           />
         </TabsContent>
 
@@ -142,27 +170,31 @@ export default function ClientDetailPage() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-base">Team Members</CardTitle>
-              <Button size="sm" variant="outline" onClick={() => setAddMemberOpen(true)}>
-                <UserPlus className="h-4 w-4" />
-                Add member
-              </Button>
+              {data.currentRole === "owner" && (
+                <Button size="sm" variant="outline" onClick={() => setInviteOpen(true)}>
+                  <UserPlus className="h-4 w-4" />
+                  Invite
+                </Button>
+              )}
             </CardHeader>
             <CardContent>
               <ClientTeam
                 members={members}
-                onRemoveMember={handleRemoveMember}
+                invites={invites}
+                onRemoveMember={data.currentRole === "owner" ? handleRemoveMember : undefined}
+                onCancelInvite={data.currentRole === "owner" ? handleCancelInvite : undefined}
               />
             </CardContent>
           </Card>
-          <AddMemberDialog
+          <InviteMemberDialog
             clientId={client.id}
-            open={addMemberOpen}
-            onOpenChange={setAddMemberOpen}
-            onAdded={refresh}
-            existingUserIds={members.map((m) => m.user_id)}
+            open={inviteOpen}
+            onOpenChange={setInviteOpen}
+            onInvited={refreshData}
           />
         </TabsContent>
       </Tabs>
     </div>
   );
 }
+

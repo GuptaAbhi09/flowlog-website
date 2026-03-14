@@ -7,6 +7,7 @@ import type { Task } from "@/types";
 import { getClientActivity } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface ClientActivityProps {
   clientId: string;
@@ -22,6 +23,10 @@ const PRIORITY_STYLES: Record<string, string> = {
   medium: "bg-yellow-100 text-yellow-700 border-yellow-200",
   low: "bg-blue-100 text-blue-700 border-blue-200",
 };
+
+function getInitials(name: string): string {
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
+}
 
 function formatDateHeader(dateStr: string): string {
   const d = parseISO(dateStr);
@@ -73,29 +78,38 @@ export function ClientActivity({ clientId }: ClientActivityProps) {
             {group.tasks.map((task) => (
               <div
                 key={task.id}
-                className="flex items-start gap-3 rounded-lg border bg-card px-3 py-2"
+                className="flex items-start gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/30"
               >
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-600" />
+                <div className="mt-1">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-500" />
+                </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm">{task.content}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="font-medium">{task.userName}</span>
-                    {task.completed_at && (
-                      <>
-                        <span>·</span>
-                        <span>{format(new Date(task.completed_at), "h:mm a")}</span>
-                      </>
-                    )}
-                    {task.priority && (
-                      <Badge
-                        className={cn(
-                          "text-[10px] px-1.5 py-0",
-                          PRIORITY_STYLES[task.priority],
-                        )}
-                      >
-                        {task.priority}
-                      </Badge>
-                    )}
+                  <p className="text-sm font-medium leading-tight">{task.content}</p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Avatar className="h-5 w-5 border">
+                      <AvatarFallback className="text-[8px]">
+                        {getInitials(task.userName)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                      <span className="font-semibold text-foreground/80">{task.userName}</span>
+                      {task.completed_at && (
+                        <>
+                          <span>·</span>
+                          <span>{format(parseISO(task.completed_at), "h:mm a")}</span>
+                        </>
+                      )}
+                      {task.priority && (
+                        <Badge
+                          className={cn(
+                            "text-[8px] px-1 py-0 leading-none",
+                            PRIORITY_STYLES[task.priority],
+                          )}
+                        >
+                          {task.priority}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

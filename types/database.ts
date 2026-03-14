@@ -103,6 +103,19 @@ export interface InboxItem {
   created_at: string;
 }
 
+export type InviteStatus = "pending" | "accepted" | "declined";
+
+export interface ClientInvite {
+  id: string;
+  client_id: string;
+  email: string;
+  token: string;
+  invited_by: string;
+  role: UserRole;
+  status: InviteStatus;
+  created_at: string;
+}
+
 // ---- Creation Inputs -------------------------------------------------------
 // Omit server-generated fields so callers only supply what they control.
 
@@ -124,6 +137,8 @@ export type CreateTask = Omit<
 export type CreateMeeting = Omit<Meeting, "id" | "created_at">;
 
 export type CreateInboxItem = Omit<InboxItem, "id" | "is_processed" | "created_at">;
+
+export type CreateInvite = Omit<ClientInvite, "id" | "status" | "created_at">;
 
 // ---- Update Inputs ---------------------------------------------------------
 // Partial updates – only the fields the caller wants to change.
