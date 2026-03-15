@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, User as UserIcon, BookOpen } from "lucide-react";
+import { ThemeToggle } from "./ThemeProvider";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -79,10 +80,10 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"
+                className="h-9 w-9 border rounded-md text-muted-foreground hover:text-primary transition-colors bg-background flex items-center justify-center p-0"
                 asChild
               >
-                <Link href="/docs">
+                <Link href="/docs" className="flex items-center justify-center">
                   <BookOpen className="h-[1.2rem] w-[1.2rem]" />
                   <span className="sr-only">Documentation</span>
                 </Link>
@@ -90,6 +91,18 @@ export function Header() {
             </TooltipTrigger>
             <TooltipContent side="bottom" align="center" className="text-xs">
               Documentation
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Theme Toggle */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="ml-1">
+                <ThemeToggle />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center" className="text-xs">
+              Toggle Theme
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
