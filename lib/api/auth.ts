@@ -77,7 +77,7 @@ export async function login(
 
   if (authError || !authData.user) return null;
 
-  let { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("profiles")
     .select("id, email, name, avatar_url, created_at")
     .eq("id", authData.user.id)

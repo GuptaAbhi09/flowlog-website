@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { format, isToday, parseISO } from "date-fns";
-import { CalendarDays, RotateCcw, Plus } from "lucide-react";
+import { CalendarDays, RotateCcw } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import type { DayLog, Task, UpdateTask } from "@/types";
 import {
@@ -20,7 +20,6 @@ import {
 import { TaskInput } from "@/components/tasks/TaskInput";
 import { TaskList } from "@/components/tasks/TaskList";
 import { EODSummary } from "@/components/tasks/EODSummary";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -37,7 +37,11 @@ export async function getInviteByToken(token: string): Promise<{
   });
 
   if (error) throw new Error(error.message);
-  return data as any;
+  return data as {
+    invite: ClientInvite;
+    client_name: string | null;
+    project_name: string | null;
+  } | null;
 }
 
 /**

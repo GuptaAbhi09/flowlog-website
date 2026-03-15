@@ -15,7 +15,10 @@ export async function getTasksByDayLogId(dayLogId: string): Promise<(Task & { cl
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((t: any) => ({
+  return (data ?? []).map((t: {
+    clients?: { name: string } | null;
+    projects?: { name: string } | null;
+  }) => ({
     ...t,
     clientName: t.clients?.name ?? null,
     projectName: t.projects?.name ?? null,

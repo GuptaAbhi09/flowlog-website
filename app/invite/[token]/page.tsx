@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { CheckCircle2, XCircle, Loader2, Building2, UserPlus } from "lucide-react";
-import { format, parseISO } from "date-fns";
-import { getInviteByToken, acceptInvite, declineInvite, getSessionUser, getClientById, logoutSupabase } from "@/lib/api";
+import { CheckCircle2, XCircle, Loader2, UserPlus } from "lucide-react";
+import { getInviteByToken, acceptInvite, declineInvite, getSessionUser, logoutSupabase } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import type { ClientInvite, Client, User } from "@/types";
+import type { ClientInvite, User } from "@/types";
 
 export default function AcceptInvitePage() {
   const params = useParams<{ token: string }>();
@@ -44,8 +43,8 @@ export default function AcceptInvitePage() {
         setProjectName(inviteData.project_name);
         setCurrentUser(userData);
         
-      } catch (err: any) {
-        if (!cancelled) setError(err.message || "Failed to load invitation.");
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load invitation.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -68,8 +67,8 @@ export default function AcceptInvitePage() {
     try {
       await acceptInvite(invite.id, currentUser.id);
       setSuccess(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to accept invitation.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to accept invitation.");
       setProcessing(false);
     }
   }
@@ -80,8 +79,8 @@ export default function AcceptInvitePage() {
     try {
       await declineInvite(invite.id);
       router.push("/");
-    } catch (err: any) {
-      setError(err.message || "Failed to decline invitation.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to decline invitation.");
       setProcessing(false);
     }
   }
@@ -166,7 +165,7 @@ export default function AcceptInvitePage() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
             <UserPlus className="h-8 w-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">You're invited!</CardTitle>
+          <CardTitle className="text-2xl">You&apos;re invited!</CardTitle>
           <CardDescription className="flex flex-col gap-1">
             <span>You have been invited to join:</span>
             <span className="font-bold text-foreground text-lg">

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, FolderKanban, Building2, Pencil, UserPlus, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, FolderKanban, Building2, Pencil, UserPlus, Trash2 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { ProjectWithTasks } from "@/types";
 import { getProjectDetail } from "@/lib/api";
@@ -55,8 +55,8 @@ export function ProjectDetailView({ projectId, context }: ProjectDetailViewProps
     try {
       await removeClientMember(memberId);
       refresh();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "An error occurred");
     }
   };
 
@@ -65,8 +65,8 @@ export function ProjectDetailView({ projectId, context }: ProjectDetailViewProps
     try {
       await cancelInvite(inviteId);
       refresh();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "An error occurred");
     }
   };
 

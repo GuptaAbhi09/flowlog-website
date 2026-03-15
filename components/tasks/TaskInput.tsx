@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { Plus, Building2, FolderKanban, AlertCircle } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { parseTaskInput } from "@/lib/parsers/taskParser";
 import { Badge } from "@/components/ui/badge";

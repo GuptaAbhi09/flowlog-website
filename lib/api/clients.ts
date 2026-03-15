@@ -108,11 +108,13 @@ export async function getClientDetail(
 
   if (membersRowsRes.error) throw new Error(membersRowsRes.error.message);
 
-  const members = (membersRowsRes.data ?? []).map((m: any) => ({
+  const members = (membersRowsRes.data ?? []).map((m: {
+    profiles?: { name: string; avatar_url: string | null } | null;
+  }) => ({
     ...m,
     userName: m.profiles?.name ?? "Unknown",
     userAvatar: m.profiles?.avatar_url ?? null
-  }));
+  })) as (import("@/types").ClientMember & { userName: string; userAvatar: string | null })[];
 
   const { data: { user: authUser } } = await supabase.auth.getUser();
   
@@ -144,7 +146,7 @@ export async function getClientDetail(
     client: client as Client,
     projects: (clientProjects ?? []) as ClientWithProjects["projects"],
     members,
-    invites: (invitesRowsRes.data ?? []) as any[],
+    invites: (invitesRowsRes.data ?? []) as import("@/types").ClientInvite[],
     currentRole,
   };
 }
@@ -165,7 +167,9 @@ export async function getClientActivity(
 
   const grouped = new Map<string, (Task & { userName: string })[]>();
 
-  for (const task of (completed ?? []) as any[]) {
+  for (const task of (completed ?? []) as (Task & {
+    profiles?: { name: string; avatar_url: string | null } | null;
+  })[]) {
     const date = task.completed_at?.slice(0, 10) ?? "unknown";
     const userName = task.profiles?.name ?? "Unknown";
     const userAvatar = task.profiles?.avatar_url ?? null;

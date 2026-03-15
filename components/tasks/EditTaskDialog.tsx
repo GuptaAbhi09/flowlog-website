@@ -48,12 +48,12 @@ export function EditTaskDialog({
       setProjectId(task.project_id ?? "");
       setPriority(task.priority ?? "");
     }
-  }, [open, task?.id, task?.client_id, task?.project_id, task?.priority]);
+  }, [open, task]);
 
   useEffect(() => {
     if (!clientId && projectId) {
       const p = projects.find((x) => x.id === projectId);
-      if (p) setClientId(p.client_id);
+      if (p) setClientId(p.client_id ?? "");
     }
   }, [clientId, projectId, projects]);
 

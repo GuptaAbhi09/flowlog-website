@@ -5,8 +5,6 @@ import {
   CheckCircle2, 
   Calendar, 
   Plus, 
-  Hash, 
-  AtSign, 
   AlertCircle,
   Users,
   LayoutDashboard,
@@ -37,8 +35,8 @@ export default function DocsPage() {
           <CardContent className="text-sm leading-relaxed text-muted-foreground">
             Flowlog is built around the **SOD (Start of Day)** and **EOD (End of Day)** ritual. 
             The goal is to help you plan your work in the morning, track it during the day, 
-            and reflect on your productivity in the evening. It's designed to be fast, 
-            minimizing the time spent on "tool management" so you can focus on actual work.
+            and reflect on your productivity in the evening. It&apos;s designed to be fast, 
+            minimizing the time spent on &quot;tool management&quot; so you can focus on actual work.
           </CardContent>
         </Card>
 
@@ -89,7 +87,7 @@ export default function DocsPage() {
             </div>
             <div className="flex gap-3">
               <AlertCircle className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
-              <p>Unfinished items from yesterday can be "rolled over" to today with one click.</p>
+              <p>Unfinished items from yesterday can be &quot;rolled over&quot; to today with one click.</p>
             </div>
             <div className="flex gap-3">
               <Calendar className="h-4 w-4 mt-0.5 text-blue-500 shrink-0" />
@@ -128,7 +126,7 @@ export default function DocsPage() {
               <h3 className="font-medium">Setup your Clients</h3>
             </div>
             <p className="text-sm text-muted-foreground pl-11">
-              Go to the **Clients** page and create your first client (e.g., a company name or "Personal"). 
+              Go to the **Clients** page and create your first client (e.g., a company name or &quot;Personal&quot;). 
               Under each client, create **Projects** to organize specific work efforts.
             </p>
           </div>
@@ -140,7 +138,7 @@ export default function DocsPage() {
             </div>
             <p className="text-sm text-muted-foreground pl-11">
               Every morning, open the **Daily Workspace**. Use the input field to list what you plan to do today. 
-              Don't forget to use tags like `@client` to link tasks to their respective goals.
+              Don&apos;t forget to use tags like `@client` to link tasks to their respective goals.
             </p>
           </div>
 
@@ -179,10 +177,10 @@ export default function DocsPage() {
           <div className="space-y-2">
             <h4 className="font-medium flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              What happens if I don't finish my tasks?
+              What happens if I don&apos;t finish my tasks?
             </h4>
             <p className="text-sm text-muted-foreground">
-              Don't worry! If you visit a past day's workspace, you'll see a **"Roll to Today"** button 
+              Don&apos;t worry! If you visit a past day&apos;s workspace, you&apos;ll see a **&quot;Roll to Today&quot;** button 
               under any pending tasks. Clicking it will copy those tasks directly to your current SOD.
             </p>
           </div>
@@ -192,7 +190,7 @@ export default function DocsPage() {
               Where can I see all my work history?
             </h4>
             <p className="text-sm text-muted-foreground">
-              The **Timeline** page shows a global feed of everything you've completed. 
+              The **Timeline** page shows a global feed of everything you&apos;ve completed. 
               You can filter this by Client, Project, or Date to find specific work items.
             </p>
           </div>

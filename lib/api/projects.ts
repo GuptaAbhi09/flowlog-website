@@ -1,4 +1,4 @@
-import type { Project, ProjectWithTasks, CreateProject, TaskWithDetails, UpdateProject } from "@/types";
+import type { Project, ProjectWithTasks, CreateProject, TaskWithDetails, UpdateProject, ClientWithProjects } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import { getCurrentUser } from "./auth";
 import { getClientDetail } from "./clients";
@@ -74,14 +74,14 @@ export async function getProjectDetail(
 
   if (projError || !project) return null;
 
-  let clientInfo: any = undefined;
+  let clientInfo: ClientWithProjects | undefined = undefined;
   let clientName = "Personal Project";
 
   if (project.client_id) {
-    clientInfo = await getClientDetail(project.client_id);
+    clientInfo = (await getClientDetail(project.client_id)) || undefined;
     clientName = clientInfo?.client.name ?? "Unknown Client";
   } else {
-    // Fetch project-specific members and invites if no client
+    // ... rest of the logic ...
     const [membersRowsRes, invitesRowsRes] = await Promise.all([
       supabase
         .from("client_members")
@@ -94,12 +94,14 @@ export async function getProjectDetail(
         .eq("status", "pending")
     ]);
 
-    const members = (membersRowsRes.data ?? []).map((m: any) => ({
+    const members = (membersRowsRes.data ?? []).map((m: {
+      profiles?: { name: string; avatar_url: string | null } | null;
+    }) => ({
       ...m,
       userName: m.profiles?.name ?? "Unknown",
       userAvatar: m.profiles?.avatar_url ?? null
-    }));
-    const invites = invitesRowsRes.data || [];
+    })) as (import("@/types").ClientMember & { userName: string; userAvatar: string | null })[];
+    const invites = (invitesRowsRes.data || []) as import("@/types").ClientInvite[];
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
@@ -126,12 +128,12 @@ export async function getProjectDetail(
     }
 
     clientInfo = {
-      client: { id: "personal", name: "Personal" },
+      client: { id: "personal", name: "Personal", created_by: null, created_at: new Date().toISOString() },
       projects: [],
       members,
-      invites,
+      invites: invites as unknown as import("@/types").ClientInvite[], // Simple cast for internal proxy
       currentRole
-    };
+    } as import("@/types").ClientWithProjects;
   }
 
   const { data: completedRows, error: compErr } = await supabase
@@ -153,8 +155,10 @@ export async function getProjectDetail(
 
   if (pendErr) throw new Error(pendErr.message);
 
-  const completedTasks: TaskWithDetails[] = (completedRows ?? []).map((task: any) => ({
-    task: task as TaskWithDetails["task"],
+  const completedTasks: TaskWithDetails[] = (completedRows ?? []).map((task: {
+    profiles?: { name: string; avatar_url: string | null } | null;
+  }) => ({
+    task: task as unknown as import("@/types/database").Task,
     clientName,
     projectName: project.name,
     completedByName: task.profiles?.name ?? null,

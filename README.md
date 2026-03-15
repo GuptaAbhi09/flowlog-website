@@ -2,8 +2,6 @@
 
 FlowLog is a powerful, modern daily workspace designed for professionals and teams to manage clients, projects, and tasks with precision. It streamlines the "Start of Day" (SOD) and "End of Day" (EOD) workflows while providing granular control over team collaboration.
 
-![FlowLog Banner](https://raw.githubusercontent.com/GuptaAbhi09/flowlog-website/main/public/banner.png) *(Note: Add your actual banner image here)*
-
 ## ✨ Key Features
 
 ### 🏢 Client & Project Management

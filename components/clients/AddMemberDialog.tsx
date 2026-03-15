@@ -53,7 +53,7 @@ export function AddMemberDialog({
     }
     setSubmitting(true);
     try {
-      await addClientMember({ client_id: clientId, user_id: userId, role });
+      await addClientMember({ client_id: clientId, project_id: null, user_id: userId, role });
       onOpenChange(false);
       onAdded?.();
     } catch (err) {

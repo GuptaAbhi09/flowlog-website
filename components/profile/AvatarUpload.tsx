@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import Cropper from "react-easy-crop";
-import { Camera, Loader2, Upload, X } from "lucide-react";
+import { Camera, Loader2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,13 +25,13 @@ export function AvatarUpload() {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+  const onCropComplete = useCallback((_croppedArea: unknown, croppedAreaPixels: { x: number; y: number; width: number; height: number }) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
@@ -82,9 +82,9 @@ export function AvatarUpload() {
       
       setIsOpen(false);
       setImageSrc(null);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error uploading avatar:", error);
-      alert("Failed to upload image: " + error.message);
+      alert("Failed to upload image: " + (error instanceof Error ? error.message : "Unknown error"));
     } finally {
       setIsUploading(false);
     }

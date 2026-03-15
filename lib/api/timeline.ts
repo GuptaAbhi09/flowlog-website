@@ -1,8 +1,5 @@
 import type { TimelineEntry, TimelineFilters } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
-import { getClientById } from "./clients";
-import { getProjectById } from "./projects";
-import { getCurrentUser } from "./auth";
 
 /**
  * Global timeline of completed work.
@@ -33,8 +30,13 @@ export async function getTimeline(
 
   if (error) throw new Error(error.message);
 
-  return (results ?? []).map((t: any) => ({
-    task: t,
+  return (results ?? []).map((t: {
+    clients?: { name: string } | null;
+    projects?: { name: string } | null;
+    profiles?: { name: string } | null;
+    completed_at: string | null;
+  }) => ({
+    task: t as unknown as import("@/types/database").Task,
     clientName: t.clients?.name ?? null,
     projectName: t.projects?.name ?? null,
     completedByName: t.profiles?.name ?? "Unknown",

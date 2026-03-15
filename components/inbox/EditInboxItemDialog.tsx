@@ -34,7 +34,7 @@ export function EditInboxItemDialog({
       setContent(item.content);
       setError(null);
     }
-  }, [open, item?.id, item?.content]);
+  }, [open, item]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

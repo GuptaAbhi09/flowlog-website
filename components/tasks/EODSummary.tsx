@@ -8,8 +8,6 @@ import {
   getProfiles,
   getClients,
   getProjects,
-  getClientById,
-  getProjectById,
 } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";

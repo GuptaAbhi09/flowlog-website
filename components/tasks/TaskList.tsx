@@ -17,7 +17,7 @@ import {
 } from "@dnd-kit/sortable";
 import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import type { Task, UpdateTask, Client, Project } from "@/types";
-import { getClientById, getProjectById, getClients, getProjects } from "@/lib/api";
+import { getClients, getProjects } from "@/lib/api";
 import { TaskItem } from "./TaskItem";
 import { EditTaskDialog } from "./EditTaskDialog";
 
@@ -147,8 +147,9 @@ export function TaskList({
             // Priority 1: Use names already attached to the task (zero latency)
             // Priority 2: Use names from the metadata map (fallback/sync)
             const meta = namesMap[task.id];
-            const clientName = (task as any).clientName ?? meta?.clientName ?? null;
-            const projectName = (task as any).projectName ?? meta?.projectName ?? null;
+            const tWithNames = task as Task & { clientName?: string; projectName?: string };
+            const clientName = tWithNames.clientName ?? meta?.clientName ?? null;
+            const projectName = tWithNames.projectName ?? meta?.projectName ?? null;
 
             return (
               <TaskItem

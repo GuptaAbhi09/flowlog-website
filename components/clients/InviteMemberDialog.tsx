@@ -75,8 +75,8 @@ export function InviteMemberDialog({
       setSuccess(true);
       setEmail("");
       onInvited?.();
-    } catch (err: any) {
-      setError(err.message || "Failed to send invitation");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send invitation");
     } finally {
       setLoading(false);
     }

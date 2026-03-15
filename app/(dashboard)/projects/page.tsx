@@ -67,7 +67,7 @@ export default function ProjectsPage() {
           <div className="space-y-1">
             <h3 className="text-lg font-semibold">No personal projects yet</h3>
             <p className="text-sm text-muted-foreground max-w-[250px] mx-auto">
-              Create a project that isn't tied to a specific client to track your personal work.
+              Create a project that isn&apos;t tied to a specific client to track your personal work.
             </p>
           </div>
           <Button variant="outline" onClick={() => setCreateOpen(true)}>

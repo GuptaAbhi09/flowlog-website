@@ -88,7 +88,7 @@ export default function RegisterPage() {
             </div>
             <CardTitle className="text-2xl">All Set, {user?.name}!</CardTitle>
             <CardDescription>
-              Your account has been created. Let's add a profile picture.
+              Your account has been created. Let&apos;s add a profile picture.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center gap-8 py-6">
