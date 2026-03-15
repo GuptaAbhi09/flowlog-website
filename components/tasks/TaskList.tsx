@@ -52,19 +52,34 @@ export function TaskList({
     let cancelled = false;
 
     const load = async () => {
-      const map: Record<string, { clientName: string | null; projectName: string | null }> = {};
-      for (const t of tasks) {
-        const [client, project] = await Promise.all([
-          t.client_id ? getClientById(t.client_id) : null,
-          t.project_id ? getProjectById(t.project_id) : null,
+      try {
+        // Fetch all dependencies in parallel once
+        const [allClients, allProjects] = await Promise.all([
+          getClients(),
+          getProjects(),
         ]);
-        if (cancelled) return;
-        map[t.id] = {
-          clientName: client?.name ?? null,
-          projectName: project?.name ?? null,
-        };
+
+        const map: Record<string, { clientName: string | null; projectName: string | null }> = {};
+        
+        // Build local lookup maps for speed
+        const clientMap = new Map(allClients.map(c => [c.id, c.name]));
+        const projectMap = new Map(allProjects.map(p => [p.id, p.name]));
+
+        for (const t of tasks) {
+          map[t.id] = {
+            clientName: t.client_id ? clientMap.get(t.client_id) ?? null : null,
+            projectName: t.project_id ? projectMap.get(t.project_id) ?? null : null,
+          };
+        }
+
+        if (!cancelled) {
+          setNamesMap(map);
+          setClients(allClients); // Optimization: Reuse this for the dialog too
+          setProjects(allProjects);
+        }
+      } catch (err) {
+        console.error("Failed to load task metadata:", err);
       }
-      if (!cancelled) setNamesMap(map);
     };
 
     load();
@@ -129,13 +144,18 @@ export function TaskList({
       >
         <div className="flex flex-col gap-2">
           {tasks.map((task) => {
-            const names = namesMap[task.id];
+            // Priority 1: Use names already attached to the task (zero latency)
+            // Priority 2: Use names from the metadata map (fallback/sync)
+            const meta = namesMap[task.id];
+            const clientName = (task as any).clientName ?? meta?.clientName ?? null;
+            const projectName = (task as any).projectName ?? meta?.projectName ?? null;
+
             return (
               <TaskItem
                 key={task.id}
                 task={task}
-                clientName={names?.clientName ?? null}
-                projectName={names?.projectName ?? null}
+                clientName={clientName}
+                projectName={projectName}
                 onToggle={onToggle}
                 onDelete={onDelete}
                 onUpdate={onUpdate}

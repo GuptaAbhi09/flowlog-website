@@ -83,15 +83,15 @@ export function TaskItem({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group flex items-center gap-2 rounded-lg border bg-card px-3 py-2 transition-colors",
-        isDragging && "z-50 shadow-lg opacity-90",
-        task.is_completed && "opacity-60",
+        "group flex items-start gap-4 rounded-xl border bg-card px-4 py-3 transition-all duration-200",
+        isDragging && "z-50 shadow-lg scale-[1.01] bg-accent/10 border-primary/20",
+        task.is_completed && "opacity-50 grayscale-[0.5]",
       )}
     >
       {/* Drag handle */}
       {!readonly && (
         <button
-          className="cursor-grab touch-none text-muted-foreground/50 hover:text-muted-foreground"
+          className="mt-1 flex-shrink-0 cursor-grab touch-none text-muted-foreground/30 hover:text-muted-foreground transition-all duration-200 lg:opacity-0 lg:group-hover:opacity-100 max-lg:opacity-100"
           {...attributes}
           {...listeners}
         >
@@ -99,37 +99,34 @@ export function TaskItem({
         </button>
       )}
 
-      {/* Checkbox */}
-      <Checkbox
-        checked={task.is_completed}
-        onCheckedChange={() => onToggle(task.id)}
-        disabled={readonly}
-      />
+      {/* Checkbox Container */}
+      <div className="mt-1 flex-shrink-0">
+        <Checkbox
+          checked={task.is_completed}
+          onCheckedChange={() => onToggle(task.id)}
+          disabled={readonly}
+          className="h-5 w-5 rounded-full border-2 transition-all data-[state=checked]:scale-110"
+        />
+      </div>
 
-      {/* Content */}
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      {/* Content Area */}
+      <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-0.5">
         {editing ? (
-          <div className="flex items-center gap-1">
-            <Input
+          <div className="flex items-center gap-2">
+            <input
               ref={editRef}
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={handleKeyDown}
               onBlur={commitEdit}
-              className="h-7 text-sm"
+              className="w-full bg-secondary/50 rounded-lg h-9 px-3 text-sm font-medium outline-none border focus:border-primary transition-colors"
             />
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={commitEdit}>
-              <Check className="h-3 w-3" />
-            </Button>
-            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={cancelEdit}>
-              <X className="h-3 w-3" />
-            </Button>
           </div>
         ) : (
           <span
             className={cn(
-              "text-sm",
-              task.is_completed && "line-through text-muted-foreground",
+              "text-sm font-medium leading-relaxed tracking-tight transition-all",
+              task.is_completed ? "text-muted-foreground line-through" : "text-foreground"
             )}
           >
             {task.content}
@@ -137,19 +134,19 @@ export function TaskItem({
         )}
 
         {/* Badges row */}
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="flex flex-wrap items-center gap-2">
           {task.priority && (
-            <Badge className={cn("text-[10px] px-1.5 py-0", PRIORITY_STYLES[task.priority])}>
+            <Badge className={cn("text-[10px] h-5 font-bold uppercase tracking-wider px-2 border-none transition-transform hover:scale-105", PRIORITY_STYLES[task.priority])}>
               {task.priority}
             </Badge>
           )}
           {clientName && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+            <Badge variant="outline" className="text-[10px] h-5 font-bold uppercase tracking-wider px-2 bg-transparent opacity-80 border-border">
               {clientName}
             </Badge>
           )}
           {projectName && (
-            <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+            <Badge variant="outline" className="text-[10px] h-5 font-bold uppercase tracking-wider px-2 bg-transparent opacity-80 border-border">
               {projectName}
             </Badge>
           )}
@@ -158,36 +155,36 @@ export function TaskItem({
 
       {/* Actions */}
       {!readonly && !editing && (
-        <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex items-center gap-1 opacity-0 transition-all duration-200 translate-x-1 lg:group-hover:opacity-100 lg:group-hover:translate-x-0 max-lg:opacity-100 max-lg:translate-x-0">
           {onEditDetails && (
             <Button
               size="icon"
-              variant="ghost"
-              className="h-7 w-7 text-muted-foreground"
+              variant="secondary"
+              className="h-8 w-8 rounded-lg bg-secondary/50 hover:bg-secondary text-muted-foreground transition-colors"
               onClick={onEditDetails}
-              title="Client / Project / Priority"
+              title="Work Category"
             >
-              <Settings2 className="h-3 w-3" />
+              <Settings2 className="h-3.5 w-3.5" />
             </Button>
           )}
           <Button
             size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground"
+            variant="secondary"
+            className="h-8 w-8 rounded-lg bg-secondary/50 hover:bg-secondary text-muted-foreground transition-colors"
             onClick={() => {
               setEditValue(task.content);
               setEditing(true);
             }}
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil className="h-3.5 w-3.5" />
           </Button>
           <Button
             size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            variant="secondary"
+            className="h-8 w-8 rounded-lg bg-secondary/50 hover:bg-destructive/10 hover:text-destructive text-muted-foreground transition-colors"
             onClick={() => onDelete(task.id)}
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-3.5 w-3.5" />
           </Button>
         </div>
       )}

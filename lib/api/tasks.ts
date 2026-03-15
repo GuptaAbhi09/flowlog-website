@@ -5,16 +5,21 @@ import { getClientByName } from "./clients";
 import { getProjectByName } from "./projects";
 import { getOrCreateTodayLog } from "./dayLogs";
 
-/** All tasks for a given day log, sorted by position. */
-export async function getTasksByDayLogId(dayLogId: string): Promise<Task[]> {
+/** All tasks for a given day log, sorted by position. Includes joined metadata for performance. */
+export async function getTasksByDayLogId(dayLogId: string): Promise<(Task & { clientName?: string; projectName?: string })[]> {
   const { data, error } = await supabase
     .from("tasks")
-    .select("*")
+    .select("*, clients(name), projects(name)")
     .eq("day_log_id", dayLogId)
     .order("position", { ascending: true });
 
   if (error) throw new Error(error.message);
-  return (data ?? []) as Task[];
+
+  return (data ?? []).map((t: any) => ({
+    ...t,
+    clientName: t.clients?.name ?? null,
+    projectName: t.projects?.name ?? null,
+  })) as (Task & { clientName?: string; projectName?: string })[];
 }
 
 /** All tasks for a user on a given date. */

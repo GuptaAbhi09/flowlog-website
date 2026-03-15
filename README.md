@@ -1,92 +1,90 @@
-# Work OS — Personal & Team Productivity Operating System
+# FlowLog: The Ultimate Professional Workspace
 
-Work OS is a high-performance work management system designed for professionals and startup teams. It acts as a "Single Source of Truth" for managing complex workflows, multiple clients, project progress, and collaborative team activity.
+FlowLog is a powerful, modern daily workspace designed for professionals and teams to manage clients, projects, and tasks with precision. It streamlines the "Start of Day" (SOD) and "End of Day" (EOD) workflows while providing granular control over team collaboration.
 
-## 🚀 The Core Philosophy
-In a fast-paced environment, information often gets scattered. **Work OS** centralizes these into one logical flow:
-1. **Plan** at the start of the day (SOD).
-2. **Execute** & **Capture** during meetings and team calls.
-3. **Review** and **Snapshot** at the end of the day (EOD).
-
----
+![FlowLog Banner](https://raw.githubusercontent.com/GuptaAbhi09/flowlog-website/main/public/banner.png) *(Note: Add your actual banner image here)*
 
 ## ✨ Key Features
 
-### 1. Daily Planning & Snapshots (SOD / EOD)
-A structured workflow to focus your energy.
-- **SOD Plan:** High-intensity planning at the start of the day.
-- **EOD Summary:** Automatic summary of accomplishments, stored as a permanent record.
+### 🏢 Client & Project Management
+- **Hierarchical Access**: Organize work by Clients and then by Projects.
+- **Deep Control**: Invite teammates to an entire Client (full access) or just a specific Project (restricted access).
+- **Team Insights**: See exactly who is working on what with dedicated team views and avatars.
 
-### 2. Smart Task Linking System
-Advanced NLP-style parsing lets you categorize while you type:
-- `@ClientName` → Automatically links task to a client.
-- `#ProjectName` → Automatically links task to a project.
-- `!high/medium/low` → Sets task priority.
+### ✍️ Smart Daily Log (SOD/EOD)
+- **Start of Day (SOD)**: Plan your day by listing tasks you intend to complete.
+- **End of Day (EOD)**: Automatically summarize your progress and see what was achieved.
+- **Task History**: Never lose track of past work with a full calendar-based archive.
 
-### 3. Professional Team Collaboration
-Transform personal productivity into team transparency:
-- **Client-Level Invitations:** Invite teammates to collaborate on specific clients.
-- **Strict Identity Validation:** Invitations are locked to specific email addresses for security.
-- **Role-Based Access (RBAC):** 
-    - **Owners:** Can manage projects, invite/remove members, and update client details.
-    - **Collaborators:** Can create tasks, check off work, and view shared activity without modifying core structures.
-- **Task Attribution:** Every task completion is stamped with `Completed By` and `Completed At`.
+### ⚡ Quick-Add Task Parser
+- **Shortcut Support**: Add tasks at lightning speed using `@` for Clients, `#` for Projects, and `!` for Priority.
+- **Smart Autocomplete**: Real-time suggestions pop up as you type, so you don't have to remember names.
 
-### 4. Meeting Notes & Action Items
-- **Meeting to Task:** Instantly convert meeting minutes into actionable tasks with one click, preserving the client context.
-- **Activity Feed:** Real-time feed of team progress within each client dashboard.
+### 🖼️ Professional Profiles
+- **Custom Avatars**: Upload and crop your profile picture directly in the app.
+- **Branding**: Consistent user identity throughout the platform, from sidebars to task history.
 
-### 5. Multi-Tenant Privacy (RLS Architecture)
-Built with security at the core using Supabase Row Level Security:
-- **Privacy First:** Your personal Day Logs, Inbox, and private tasks are **invisible** to anyone else, even your team members.
-- **Shared Context:** Only work specifically linked to a shared Client/Project is visible to invited teammates.
+### 🔒 Enterprise-Grade Security
+- **Privacy First**: Built with Supabase RLS, ensuring your data is only visible to you and your authorized teammates.
+- **Verified Invites**: A secure invitation system ensures only the right people can join your workspace.
 
----
+## 🛠️ Tech Stack
 
-## 🛠️ Technology Stack
-- **Frontend:** Next.js 14 (App Router)
-- **Styling:** Vanilla CSS + Radix UI + Lucide Icons
-- **State Management:** Zustand (Persisted)
-- **Backend/DB:** Supabase (PostgreSQL)
-- **Security:** Strict RLS Policies & Identity-verified Invitations
-- **Animations:** Framer Motion
+- **Frontend**: [Next.js](https://nextjs.org/) (App Router), React, TypeScript
+- **Styling**: Tailwind CSS
+- **Backend / Database**: [Supabase](https://supabase.com/) (PostgreSQL + RLS)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **State Management**: Zustand
+- **Date Handling**: date-fns
 
----
+## 📦 Getting Started
 
-## 📂 Database & Migrations
-The database logic is divided into structured migrations:
-- `01_base_schema.sql`: Core tables, trigger for user profiles.
-- `02_collaboration_v1.sql`: Invitation systems and attribution schema.
-- `03_rls_policies.sql`: Refined security layer for team/personal isolation.
+### Prerequisites
+- Node.js (v18+)
+- Supabase Account
 
----
+### Installation
 
-## 🛠️ Getting Started
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/GuptaAbhi09/flowlog-website.git
+   cd flowlog-website
+   ```
 
-1. **Install Dependencies:**
+2. **Install dependencies:**
    ```bash
    npm install
    ```
 
-2. **Environment Setup:**
-   Create `.env.local` with your Supabase credentials:
+3. **Environment Setup:**
+   Create a `.env.local` file in the root directory and add your Supabase credentials:
    ```env
-   NEXT_PUBLIC_SUPABASE_URL=...
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
    ```
 
-3. **Supabase Setup:**
-   - Run the SQL files in `/supabase/migrations` via the Supabase SQL Editor.
-   - Set **Auth Redirect URLs** to `http://localhost:3000/**` in the Supabase Dashboard.
+4. **Database Setup:**
+   Apply the migrations located in the `supabase/migrations` folder to your Supabase project.
 
-4. **Run Development:**
+5. **Run the development server:**
    ```bash
    npm run dev
    ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 🤝 Roadmap
+- [ ] Mobile App (React Native/Expo)
+- [ ] Real-time Chat within projects
+- [ ] Advanced Analytics and Productivity Insights
+- [ ] Third-party Integrations (Slack, Discord, Google Calendar)
+
+## 👤 Ownership
+
+This project is authored, owned, and maintained by **Abhi Gupta** ([@GuptaAbhi09](https://github.com/GuptaAbhi09)). All rights reserved.
+
+## 📄 License
+
+This project is licensed under the MIT License.
 
 ---
-
-## 🚀 Future Roadmap
-- [ ] Automated Email Invites via Resend.
-- [ ] Gantt Chart Visualization for Project Timelines.
-- [ ] AI-assisted SOD planning based on previous day's performance.
+Built with ❤️ by [Abhishek Gupta](https://github.com/GuptaAbhi09)

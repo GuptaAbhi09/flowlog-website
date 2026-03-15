@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/card";
 import { useStore } from "@/store/useStore";
 import { signUp } from "@/lib/api";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -23,6 +25,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isRegistered, setIsRegistered] = useState(false);
 
   const user = useStore((s) => s.user);
   const setUser = useStore((s) => s.setUser);
@@ -67,13 +70,44 @@ export default function RegisterPage() {
       }
 
       setUser(result.user);
-      router.push("/daily");
+      setIsRegistered(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
   };
+
+  if (isRegistered) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4 animate-in fade-in zoom-in-95 duration-300">
+        <Card className="w-full max-w-sm shadow-xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl">All Set, {user?.name}!</CardTitle>
+            <CardDescription>
+              Your account has been created. Let's add a profile picture.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center gap-8 py-6">
+            <AvatarUpload />
+            <div className="w-full space-y-3">
+              <Button 
+                variant="default" 
+                className="w-full h-11" 
+                onClick={() => router.push("/daily")}
+              >
+                Go to Daily Workspace
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">

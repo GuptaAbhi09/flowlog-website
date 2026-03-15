@@ -1,6 +1,7 @@
 import { AuthGuard } from "@/components/layout/AuthGuard";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Header } from "@/components/layout/Header";
+import { DashboardContentWrapper } from "@/components/layout/DashboardContentWrapper";
 
 export default function DashboardLayout({
   children,
@@ -14,7 +15,11 @@ export default function DashboardLayout({
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
           <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-            {children}
+            <div className="mx-auto max-w-5xl w-full">
+              <DashboardContentWrapper>
+                {children}
+              </DashboardContentWrapper>
+            </div>
           </main>
         </div>
       </div>

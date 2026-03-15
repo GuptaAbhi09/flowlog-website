@@ -44,10 +44,10 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [allClients, setAllClients] = useState<Client[]>([]);
   const [allProjects, setAllProjects] = useState<Project[]>([]);
+  const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // Background fetch clients/projects for suggestions
     getClients().then(setAllClients).catch(() => {});
     getProjects().then(setAllProjects).catch(() => {});
   }, []);
@@ -56,8 +56,6 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
 
   const handleInputChange = (val: string) => {
     setValue(val);
-    
-    // Find the last trigger character
     const lastWordMatch = val.match(/[@#!][\w\s]*$/);
     if (!lastWordMatch) {
       setSuggestionType(null);
@@ -94,13 +92,12 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
   };
 
   const applySuggestion = (item: SuggestionItem) => {
-    const val = value;
-    const lastTriggerIndex = val.lastIndexOf(suggestionType === "client" ? "@" : suggestionType === "project" ? "#" : "!");
+    const lastTriggerIndex = value.lastIndexOf(suggestionType === "client" ? "@" : suggestionType === "project" ? "#" : "!");
     if (lastTriggerIndex === -1) return;
 
-    const prefix = val.slice(0, lastTriggerIndex);
-    const suffix = val.slice(val.indexOf(" ", lastTriggerIndex)); // keep rest of string if user typed space after
-    const newSuffix = suffix.startsWith(" ") ? suffix : " "; // Ensure space after tag
+    const prefix = value.slice(0, lastTriggerIndex);
+    const suffix = value.slice(value.indexOf(" ", lastTriggerIndex));
+    const newSuffix = suffix.startsWith(" ") ? suffix : " ";
 
     const tag = suggestionType === "client" ? "@" : suggestionType === "project" ? "#" : "!";
     const newValue = `${prefix}${tag}${item.label}${newSuffix}`;
@@ -150,71 +147,104 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
   };
 
   return (
-    <div className="relative space-y-2">
-      <div className="flex gap-2">
-        <Input
-          ref={inputRef}
-          value={value}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onBlur={() => setTimeout(() => { setSuggestionType(null); setSuggestions([]); }, 200)}
-          placeholder={placeholder || "Add work item… (use @Client #Project !high)"}
-          disabled={disabled || submitting}
-          className="flex-1"
-        />
-        <Button
-          onClick={handleSubmit}
-          disabled={!value.trim() || disabled || submitting}
-          size="icon"
-        >
-          <Plus className="h-4 w-4" />
-        </Button>
+    <div className="relative group/input">
+      <div className={cn(
+        "flex flex-col gap-2 rounded-xl border bg-card p-1.5 transition-all duration-200",
+        isFocused ? "ring-2 ring-primary/20 border-primary shadow-sm" : "border-border",
+        disabled && "opacity-50 pointer-events-none"
+      )}>
+        <div className="flex items-center gap-2 px-1">
+          <div className="flex-shrink-0 ml-1.5">
+            <Plus className={cn("h-4 w-4 transition-colors", isFocused ? "text-primary" : "text-muted-foreground/50")} />
+          </div>
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={(e) => handleInputChange(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => {
+              setIsFocused(false);
+              setTimeout(() => { setSuggestionType(null); setSuggestions([]); }, 200);
+            }}
+            placeholder={placeholder || "What's on your mind? (use @, #, !)"}
+            className="flex-1 bg-transparent py-2 text-sm font-medium outline-none placeholder:text-muted-foreground/40"
+            disabled={submitting}
+          />
+          <Button
+            onClick={handleSubmit}
+            disabled={!value.trim() || submitting}
+            size="sm"
+            className={cn("h-8 rounded-lg px-3 transition-opacity", value.trim() ? "opacity-100" : "opacity-0 pointer-events-none")}
+          >
+            {submitting ? "Processing…" : "Add"}
+          </Button>
+        </div>
+
+        {parsed && (parsed.clientName || parsed.projectName || parsed.priority) ? (
+          <div className="flex flex-wrap items-center gap-1.5 border-t pt-1.5 px-2 animate-in slide-in-from-top-1">
+            {parsed.clientName && (
+              <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 bg-primary/5 text-primary border-none">
+                <Building2 className="mr-1 h-3 w-3" />
+                {parsed.clientName}
+              </Badge>
+            )}
+            {parsed.projectName && (
+              <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 bg-blue-50 text-blue-600 border-none">
+                <FolderKanban className="mr-1 h-3 w-3" />
+                {parsed.projectName}
+              </Badge>
+            )}
+            {parsed.priority && (
+              <Badge
+                className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 border-none",
+                  PRIORITY_COLORS[parsed.priority],
+                )}
+              >
+                <AlertCircle className="mr-1 h-3 w-3" />
+                {parsed.priority}
+              </Badge>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-4 border-t pt-1.5 px-3">
+            <div className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tight">
+              <span className="text-primary/40 font-black">@</span> client
+            </div>
+            <div className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tight">
+              <span className="text-blue-500/40 font-black">#</span> project
+            </div>
+            <div className="flex items-center gap-1 text-[9px] font-bold text-muted-foreground/40 uppercase tracking-tight">
+              <span className="text-red-500/40 font-black">!</span> priority
+            </div>
+          </div>
+        )}
       </div>
 
       {suggestionType && suggestions.length > 0 && (
-        <div className="absolute left-0 top-[40px] z-50 w-64 overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md animate-in fade-in zoom-in-95 duration-100">
-          <div className="p-1">
+        <div className="absolute left-0 top-full z-50 mt-2 w-full sm:w-72 overflow-hidden rounded-xl border bg-popover text-popover-foreground shadow-xl animate-in fade-in slide-in-from-top-2">
+          <div className="p-1.5">
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50 border-b mb-1">
+              Select {suggestionType}
+            </div>
             {suggestions.map((item, idx) => (
               <button
                 key={item.id}
                 className={cn(
-                  "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors",
-                  idx === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/50"
+                  "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-all",
+                  idx === selectedIndex ? "bg-accent text-accent-foreground" : "hover:bg-accent/30"
                 )}
                 onClick={() => applySuggestion(item)}
               >
-                {item.type === "client" && <Building2 className="h-3.5 w-3.5 opacity-70" />}
-                {item.type === "project" && <FolderKanban className="h-3.5 w-3.5 opacity-70" />}
-                {item.type === "priority" && <AlertCircle className="h-3.5 w-3.5 opacity-70" />}
-                <span className="truncate">{item.label}</span>
+                {item.type === "client" && <Building2 className="h-4 w-4 opacity-50" />}
+                {item.type === "project" && <FolderKanban className="h-4 w-4 opacity-50" />}
+                {item.type === "priority" && <AlertCircle className="h-4 w-4 opacity-50" />}
+                <span className="truncate font-medium">{item.label}</span>
               </button>
             ))}
           </div>
-        </div>
-      )}
-
-      {parsed && (parsed.clientName || parsed.projectName || parsed.priority) && (
-        <div className="flex flex-wrap items-center gap-1.5 px-1">
-          {parsed.clientName && (
-            <Badge variant="outline" className="text-xs font-normal">
-              @{parsed.clientName}
-            </Badge>
-          )}
-          {parsed.projectName && (
-            <Badge variant="outline" className="text-xs font-normal">
-              #{parsed.projectName}
-            </Badge>
-          )}
-          {parsed.priority && (
-            <Badge
-              className={cn(
-                "text-xs font-normal",
-                PRIORITY_COLORS[parsed.priority],
-              )}
-            >
-              !{parsed.priority}
-            </Badge>
-          )}
         </div>
       )}
     </div>

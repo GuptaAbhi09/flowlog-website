@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Menu, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, LogOut, User as UserIcon, BookOpen, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,12 +14,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useStore } from "@/store/useStore";
 import { logoutSupabase } from "@/lib/api";
 import { SidebarNav } from "./Sidebar";
@@ -47,7 +53,7 @@ export function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-card px-4 lg:px-6">
+      <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md lg:px-6">
         {/* Mobile menu trigger */}
         <Button
           variant="ghost"
@@ -66,13 +72,36 @@ export function Header() {
 
         <div className="flex-1" />
 
+        {/* Documentation link */}
+        <TooltipProvider delayDuration={400}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"
+                asChild
+              >
+                <Link href="/docs">
+                  <BookOpen className="h-[1.2rem] w-[1.2rem]" />
+                  <span className="sr-only">Documentation</span>
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="center" className="text-xs">
+              Documentation
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         {/* User dropdown */}
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="gap-2 px-2">
-                <Avatar className="h-7 w-7">
-                  <AvatarFallback className="text-xs">
+                <Avatar className="h-8 w-8 border shadow-sm flex-shrink-0">
+                  <AvatarImage src={user.avatar_url || ""} />
+                  <AvatarFallback className="text-xs bg-primary/5 font-bold">
                     {getInitials(user.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -105,13 +134,13 @@ export function Header() {
 
       {/* Mobile sidebar sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-52 p-0">
-          <SheetHeader className="border-b px-5 py-4">
+        <SheetContent side="left" className="w-[280px] p-0">
+          <SheetHeader className="border-b h-16 flex items-center px-6">
             <SheetTitle className="flex items-center text-left">
               <img src="/assets/flowlog.png" alt="FlowLog" className="h-10 w-auto object-contain" />
             </SheetTitle>
           </SheetHeader>
-          <div className="pt-2">
+          <div className="overflow-y-auto h-[calc(100vh-4rem)]">
             <SidebarNav onNavigate={() => setMobileOpen(false)} />
           </div>
         </SheetContent>

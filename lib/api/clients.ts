@@ -95,21 +95,24 @@ export async function getClientDetail(
   if (projError) throw new Error(projError.message);
 
   const [membersRowsRes, invitesRowsRes] = await Promise.all([
-    supabase.from("client_members").select("*").eq("client_id", clientId),
-    supabase.from("client_invites").select("*").eq("client_id", clientId).eq("status", "pending")
+    supabase
+      .from("client_members")
+      .select("*, profiles:user_id(name, avatar_url)")
+      .eq("client_id", clientId),
+    supabase
+      .from("client_invites")
+      .select("*")
+      .eq("client_id", clientId)
+      .eq("status", "pending")
   ]);
-
-  const membersRows = membersRowsRes.data;
-  const invites = (invitesRowsRes.data ?? []) as any[];
 
   if (membersRowsRes.error) throw new Error(membersRowsRes.error.message);
 
-  const members = await Promise.all(
-    (membersRows ?? []).map(async (m) => {
-      const u = await getCurrentUser(m.user_id);
-      return { ...m, userName: u?.name ?? "Unknown" };
-    }),
-  );
+  const members = (membersRowsRes.data ?? []).map((m: any) => ({
+    ...m,
+    userName: m.profiles?.name ?? "Unknown",
+    userAvatar: m.profiles?.avatar_url ?? null
+  }));
 
   const { data: { user: authUser } } = await supabase.auth.getUser();
   
@@ -124,12 +127,13 @@ export async function getClientDetail(
         user_id: client.created_by,
         role: "owner",
         added_at: client.created_at,
-        userName: creator.name
+        userName: creator.name,
+        userAvatar: creator.avatar_url
       });
     }
   }
 
-  let currentRole = membersRows?.find(m => m.user_id === authUser?.id)?.role ?? null;
+  let currentRole = membersRowsRes.data?.find(m => m.user_id === authUser?.id)?.role ?? null;
   
   // If the user created the client, they are an owner even if not explicitly in client_members
   if (!currentRole && client.created_by === authUser?.id) {
@@ -140,33 +144,32 @@ export async function getClientDetail(
     client: client as Client,
     projects: (clientProjects ?? []) as ClientWithProjects["projects"],
     members,
-    invites,
+    invites: (invitesRowsRes.data ?? []) as any[],
     currentRole,
   };
 }
 
-/** Completed tasks for a client, grouped by date (most recent first). */
+/** Completed tasks for a client, grouped by date (most recent first). Optimized with joins. */
 export async function getClientActivity(
   clientId: string,
 ): Promise<{ date: string; tasks: (Task & { userName: string })[] }[]> {
   const { data: completed, error } = await supabase
     .from("tasks")
-    .select("*")
+    .select("*, profiles!completed_by(name, avatar_url)")
     .eq("client_id", clientId)
     .eq("is_completed", true)
     .not("completed_at", "is", null)
     .order("completed_at", { ascending: false });
 
   if (error) throw new Error(error.message);
-  const tasksList = (completed ?? []) as Task[];
 
   const grouped = new Map<string, (Task & { userName: string })[]>();
 
-  for (const task of tasksList) {
+  for (const task of (completed ?? []) as any[]) {
     const date = task.completed_at?.slice(0, 10) ?? "unknown";
-    const u = await getCurrentUser(task.completed_by ?? "");
-    const userName = u?.name ?? "Unknown";
-    const entry = { ...task, userName };
+    const userName = task.profiles?.name ?? "Unknown";
+    const userAvatar = task.profiles?.avatar_url ?? null;
+    const entry = { ...task, userName, userAvatar };
     if (!grouped.has(date)) grouped.set(date, []);
     grouped.get(date)!.push(entry);
   }

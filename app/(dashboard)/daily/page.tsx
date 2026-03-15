@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { format, isToday, parseISO } from "date-fns";
-import { CalendarDays, RotateCcw } from "lucide-react";
+import { CalendarDays, RotateCcw, Plus } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import type { DayLog, Task, UpdateTask } from "@/types";
 import {
@@ -20,6 +20,7 @@ import {
 import { TaskInput } from "@/components/tasks/TaskInput";
 import { TaskList } from "@/components/tasks/TaskList";
 import { EODSummary } from "@/components/tasks/EODSummary";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -138,48 +139,43 @@ export default function DailyPage() {
 
   // ---- Render --------------------------------------------------------------
 
-  if (loading) {
-    return (
-      <div className="flex h-64 items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
         <div>
           <h1 className="text-2xl font-bold">Daily Workspace</h1>
           <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarDays className="h-4 w-4" />
-            <span>{dateLabel}</span>
+            {loading ? (
+              <div className="h-4 w-32 animate-pulse bg-muted rounded" />
+            ) : (
+              <span>{dateLabel}</span>
+            )}
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Calendar date picker */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2" disabled={loading}>
                 <CalendarDays className="h-4 w-4" />
                 Pick date
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="p-2">
+            <PopoverContent align="end" className="p-0 border-none">
               <Calendar
                 mode="single"
                 selected={
                   currentLog ? parseISO(currentLog.date) : new Date()
                 }
                 onSelect={handleSelectDate}
+                className="rounded-lg border shadow-md"
               />
             </PopoverContent>
           </Popover>
 
-          {/* Go to Today button (when viewing a past log) */}
-          {!isViewingToday && (
+          {!isViewingToday && !loading && (
             <Button size="sm" onClick={handleGoToToday}>
               Go to Today
             </Button>
@@ -187,70 +183,91 @@ export default function DailyPage() {
         </div>
       </div>
 
-      {/* Main content */}
-      <Tabs defaultValue="sod">
-        <TabsList>
-          <TabsTrigger value="sod">
-            Start of Day
-          </TabsTrigger>
-          <TabsTrigger value="eod">
-            End of Day
-          </TabsTrigger>
-        </TabsList>
+      {loading ? (
+        <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="flex gap-2">
+            <div className="h-9 w-24 bg-muted animate-pulse rounded-md" />
+            <div className="h-9 w-24 bg-muted animate-pulse rounded-md" />
+          </div>
+          <div className="space-y-4">
+            <div className="h-12 w-full bg-muted animate-pulse rounded-lg" />
+            <div className="space-y-2">
+              <div className="h-16 w-full bg-muted/50 animate-pulse rounded-lg" />
+              <div className="h-16 w-full bg-muted/50 animate-pulse rounded-lg" />
+              <div className="h-16 w-full bg-muted/50 animate-pulse rounded-lg" />
+            </div>
+          </div>
+        </div>
+      ) : (
+        <Tabs defaultValue="sod" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="sod">
+              Start of Day
+            </TabsTrigger>
+            <TabsTrigger value="eod">
+              End of Day
+            </TabsTrigger>
+          </TabsList>
 
-        {/* SOD Tab */}
-        <TabsContent value="sod" className="mt-4 space-y-4">
-          {/* Task input (only when viewing today) */}
-          {isViewingToday && (
-            <TaskInput onSubmit={handleAddTask} />
-          )}
+          <TabsContent value="sod" className="space-y-6 outline-none">
+            {isViewingToday && (
+              <div className="space-y-2">
+                <TaskInput onSubmit={handleAddTask} />
+              </div>
+            )}
 
-          {/* Task list */}
-          <TaskList
-            tasks={tasks}
-            onToggle={handleToggle}
-            onDelete={handleDelete}
-            onUpdate={handleUpdate}
-            onUpdateTask={isViewingToday ? handleUpdateTask : undefined}
-            onReorder={handleReorder}
-            readonly={!isViewingToday}
-          />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between px-1">
+                <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  Tasks
+                </h2>
+              </div>
+              <TaskList
+                tasks={tasks}
+                onToggle={handleToggle}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                onUpdateTask={isViewingToday ? handleUpdateTask : undefined}
+                onReorder={handleReorder}
+                readonly={!isViewingToday}
+              />
+            </div>
 
-          {/* Roll pending button (for past logs with pending items) */}
-          {!isViewingToday && hasPending && (
+            {!isViewingToday && hasPending && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardContent className="flex items-center justify-between py-4">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-primary">Pending items found</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tasks.filter((t) => !t.is_completed).length} items remaining from this day.
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="gap-2"
+                    onClick={handleRollPending}
+                    disabled={rolling}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    {rolling ? "Rolling…" : "Roll to Today"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="eod" className="outline-none">
             <Card>
-              <CardContent className="flex items-center justify-between py-4">
-                <p className="text-sm text-muted-foreground">
-                  {tasks.filter((t) => !t.is_completed).length} pending item(s)
-                  from this day.
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-2"
-                  onClick={handleRollPending}
-                  disabled={rolling}
-                >
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  {rolling ? "Rolling…" : "Roll Pending to Today"}
-                </Button>
+              <CardHeader className="pb-3 border-b mb-4">
+                <CardTitle className="text-base">End of Day Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <EODSummary tasks={tasks} />
               </CardContent>
             </Card>
-          )}
-        </TabsContent>
-
-        {/* EOD Tab */}
-        <TabsContent value="eod" className="mt-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">End of Day Summary</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EODSummary tasks={tasks} />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }

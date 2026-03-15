@@ -1,13 +1,13 @@
 "use client";
 
 import type { ClientMember, ClientInvite } from "@/types";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { UserMinus, Mail, X } from "lucide-react";
 
 interface ClientTeamProps {
-  members: (ClientMember & { userName: string })[];
+  members: (ClientMember & { userName: string; userAvatar: string | null })[];
   invites?: ClientInvite[];
   onRemoveMember?: (memberId: string) => void;
   onCancelInvite?: (inviteId: string) => void;
@@ -40,9 +40,10 @@ export function ClientTeam({
     <div className="space-y-6">
       <div className="divide-y">
         {members.map((member) => (
-          <div key={member.id} className="flex items-center gap-3 py-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="text-xs">
+          <div key={member.id} className="flex items-center gap-4 py-3">
+            <Avatar className="h-9 w-9 border shadow-sm">
+              <AvatarImage src={member.userAvatar || ""} />
+              <AvatarFallback className="text-xs font-semibold bg-primary/5">
                 {getInitials(member.userName)}
               </AvatarFallback>
             </Avatar>

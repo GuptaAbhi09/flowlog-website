@@ -7,8 +7,9 @@ import { useStore } from "@/store/useStore";
 import {
   updateProfile,
   updatePassword,
-  logoutSupabase,
+  logoutSupabase, 
 } from "@/lib/api";
+import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -121,7 +122,10 @@ export default function SettingsPage() {
           <CardTitle className="text-base">Profile</CardTitle>
           <CardDescription>Your display name and email.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          <div className="flex justify-center pb-2">
+            <AvatarUpload />
+          </div>
           <div className="grid gap-2">
             <label htmlFor="settings-email" className="text-sm font-medium">
               Email

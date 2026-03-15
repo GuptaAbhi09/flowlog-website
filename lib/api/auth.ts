@@ -6,12 +6,14 @@ function profileToUser(row: {
   id: string;
   email: string;
   name: string;
+  avatar_url: string | null;
   created_at: string;
 }): User {
   return {
     id: row.id,
     email: row.email,
     name: row.name,
+    avatar_url: row.avatar_url,
     created_at: row.created_at,
   };
 }
@@ -53,7 +55,7 @@ export async function signUp(
     }
     const profile = await supabase
       .from("profiles")
-      .select("id, email, name, created_at")
+      .select("id, email, name, avatar_url, created_at")
       .eq("id", data.user.id)
       .single();
     if (profile.data) return { user: profileToUser(profile.data) };
@@ -77,7 +79,7 @@ export async function login(
 
   let { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, email, name, created_at")
+    .select("id, email, name, avatar_url, created_at")
     .eq("id", authData.user.id)
     .single();
 
@@ -94,7 +96,7 @@ export async function login(
     );
     const retry = await supabase
       .from("profiles")
-      .select("id, email, name, created_at")
+      .select("id, email, name, avatar_url, created_at")
       .eq("id", authData.user.id)
       .single();
     if (retry.data) return profileToUser(retry.data);
@@ -119,7 +121,7 @@ export async function getSessionUser(): Promise<User | null> {
 export async function getCurrentUser(userId: string): Promise<User | null> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, name, created_at")
+    .select("id, email, name, avatar_url, created_at")
     .eq("id", userId)
     .single();
 
@@ -133,7 +135,7 @@ export async function getCurrentUser(userId: string): Promise<User | null> {
 export async function getProfiles(): Promise<User[]> {
   const { data, error } = await supabase
     .from("profiles")
-    .select("id, email, name, created_at")
+    .select("id, email, name, avatar_url, created_at")
     .order("name");
   if (error) return [];
   return (data ?? []).map(profileToUser);
@@ -144,13 +146,13 @@ export async function getProfiles(): Promise<User[]> {
  */
 export async function updateProfile(
   userId: string,
-  updates: { name?: string },
+  updates: { name?: string; avatar_url?: string | null },
 ): Promise<User | null> {
   const { data, error } = await supabase
     .from("profiles")
     .update(updates)
     .eq("id", userId)
-    .select("id, email, name, created_at")
+    .select("id, email, name, avatar_url, created_at")
     .single();
 
   if (error || !data) return null;

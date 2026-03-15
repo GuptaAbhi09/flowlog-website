@@ -83,19 +83,23 @@ export async function getProjectDetail(
   } else {
     // Fetch project-specific members and invites if no client
     const [membersRowsRes, invitesRowsRes] = await Promise.all([
-      supabase.from("client_members").select("*").eq("project_id", projectId),
-      supabase.from("client_invites").select("*").eq("project_id", projectId).eq("status", "pending")
+      supabase
+        .from("client_members")
+        .select("*, profiles:user_id(name, avatar_url)")
+        .eq("project_id", projectId),
+      supabase
+        .from("client_invites")
+        .select("*")
+        .eq("project_id", projectId)
+        .eq("status", "pending")
     ]);
 
-    const membersRows = membersRowsRes.data;
+    const members = (membersRowsRes.data ?? []).map((m: any) => ({
+      ...m,
+      userName: m.profiles?.name ?? "Unknown",
+      userAvatar: m.profiles?.avatar_url ?? null
+    }));
     const invites = invitesRowsRes.data || [];
-
-    const members = await Promise.all(
-      (membersRows ?? []).map(async (m) => {
-        const u = await getCurrentUser(m.user_id);
-        return { ...m, userName: u?.name ?? "Unknown" };
-      }),
-    );
 
     const { data: { user: authUser } } = await supabase.auth.getUser();
 
@@ -110,11 +114,12 @@ export async function getProjectDetail(
           user_id: project.user_id,
           role: "owner",
           added_at: project.created_at,
-          userName: ownerUser.name
+          userName: ownerUser.name,
+          userAvatar: ownerUser.avatar_url
         });
       }
     }
-    let currentRole = membersRows?.find(m => m.user_id === authUser?.id)?.role ?? null;
+    let currentRole = membersRowsRes.data?.find(m => m.user_id === authUser?.id)?.role ?? null;
     
     if (!currentRole && project.user_id === authUser?.id) {
       currentRole = "owner";
@@ -131,7 +136,7 @@ export async function getProjectDetail(
 
   const { data: completedRows, error: compErr } = await supabase
     .from("tasks")
-    .select("*")
+    .select("*, profiles!completed_by(name, avatar_url)")
     .eq("project_id", projectId)
     .eq("is_completed", true)
     .not("completed_at", "is", null)
@@ -148,17 +153,13 @@ export async function getProjectDetail(
 
   if (pendErr) throw new Error(pendErr.message);
 
-  const completedTasks: TaskWithDetails[] = await Promise.all(
-    (completedRows ?? []).map(async (task) => {
-      const u = await getCurrentUser(task.completed_by ?? "");
-      return {
-        task: task as TaskWithDetails["task"],
-        clientName,
-        projectName: project.name,
-        completedByName: u?.name ?? null,
-      };
-    }),
-  );
+  const completedTasks: TaskWithDetails[] = (completedRows ?? []).map((task: any) => ({
+    task: task as TaskWithDetails["task"],
+    clientName,
+    projectName: project.name,
+    completedByName: task.profiles?.name ?? null,
+    completedByAvatar: task.profiles?.avatar_url ?? null,
+  }));
 
   return {
     project: project as Project,

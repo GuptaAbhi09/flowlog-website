@@ -5,7 +5,9 @@ import { CheckCircle2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import type { Task } from "@/types";
 import {
-  getCurrentUser,
+  getProfiles,
+  getClients,
+  getProjects,
   getClientById,
   getProjectById,
 } from "@/lib/api";
@@ -94,21 +96,31 @@ export function EODSummary({ tasks }: EODSummaryProps) {
     let cancelled = false;
 
     const load = async () => {
-      const map: Record<string, TaskDetails> = {};
-      for (const t of completed) {
-        const [user, client, project] = await Promise.all([
-          t.completed_by ? getCurrentUser(t.completed_by) : null,
-          t.client_id ? getClientById(t.client_id) : null,
-          t.project_id ? getProjectById(t.project_id) : null,
+      try {
+        const [allProfiles, allClients, allProjects] = await Promise.all([
+          getProfiles(),
+          getClients(),
+          getProjects(),
         ]);
-        if (cancelled) return;
-        map[t.id] = {
-          completedByName: user?.name ?? null,
-          clientName: client?.name ?? null,
-          projectName: project?.name ?? null,
-        };
+
+        const map: Record<string, TaskDetails> = {};
+        
+        const profileMap = new Map(allProfiles.map(p => [p.id, p.name]));
+        const clientMap = new Map(allClients.map(c => [c.id, c.name]));
+        const projectMap = new Map(allProjects.map(p => [p.id, p.name]));
+
+        for (const t of completed) {
+          map[t.id] = {
+            completedByName: t.completed_by ? profileMap.get(t.completed_by) ?? null : null,
+            clientName: t.client_id ? clientMap.get(t.client_id) ?? null : null,
+            projectName: t.project_id ? projectMap.get(t.project_id) ?? null : null,
+          };
+        }
+
+        if (!cancelled) setDetailsMap(map);
+      } catch (err) {
+        console.error("Failed to load EOD metadata:", err);
       }
-      if (!cancelled) setDetailsMap(map);
     };
 
     load();

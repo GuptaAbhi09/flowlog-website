@@ -83,7 +83,7 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Inbox</h1>
         <p className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">

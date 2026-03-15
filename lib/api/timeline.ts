@@ -16,7 +16,7 @@ export async function getTimeline(
 
   let query = supabase
     .from("tasks")
-    .select("*")
+    .select("*, clients(name), projects(name), profiles!completed_by(name)")
     .eq("user_id", authUser.id)
     .eq("is_completed", true)
     .not("completed_at", "is", null)
@@ -29,30 +29,15 @@ export async function getTimeline(
   if (filters.dateTo)
     query = query.lte("completed_at", `${filters.dateTo}T23:59:59.999Z`);
 
-  const { data: tasks, error } = await query;
+  const { data: results, error } = await query;
 
   if (error) throw new Error(error.message);
-  const list = (tasks ?? []) as TimelineEntry["task"][];
 
-  const entries: TimelineEntry[] = await Promise.all(
-    list.map(async (task) => {
-      const clientName = task.client_id
-        ? (await getClientById(task.client_id))?.name ?? null
-        : null;
-      const projectName = task.project_id
-        ? (await getProjectById(task.project_id))?.name ?? null
-        : null;
-      const u = await getCurrentUser(task.completed_by ?? "");
-      const completedByName = u?.name ?? "Unknown";
-      return {
-        task,
-        clientName,
-        projectName,
-        completedByName,
-        date: task.completed_at?.slice(0, 10) ?? "",
-      };
-    }),
-  );
-
-  return entries;
+  return (results ?? []).map((t: any) => ({
+    task: t,
+    clientName: t.clients?.name ?? null,
+    projectName: t.projects?.name ?? null,
+    completedByName: t.profiles?.name ?? "Unknown",
+    date: t.completed_at?.slice(0, 10) ?? "",
+  })) as TimelineEntry[];
 }

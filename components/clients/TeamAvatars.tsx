@@ -1,13 +1,13 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ClientMember, ClientInvite } from "@/types";
 
 interface TeamAvatarsProps {
-  members: (ClientMember & { userName: string })[];
+  members: (ClientMember & { userName: string; userAvatar: string | null })[];
   invites?: ClientInvite[];
   onInviteClick?: () => void;
   showInviteButton?: boolean;
@@ -33,7 +33,8 @@ export function TeamAvatars({
   return (
     <div className={cn("flex items-center -space-x-2", className)}>
       {visibleMembers.map((m) => (
-        <Avatar key={m.id} className="h-8 w-8 border-2 border-background">
+        <Avatar key={m.id} className="h-8 w-8 border-2 border-background shadow-sm">
+          <AvatarImage src={m.userAvatar || ""} />
           <AvatarFallback className="text-[10px] bg-primary/10 font-bold">
             {getInitials(m.userName)}
           </AvatarFallback>

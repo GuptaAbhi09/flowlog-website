@@ -44,7 +44,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Personal Projects</h1>

@@ -21,6 +21,7 @@ export interface TaskWithDetails {
   clientName: string | null;
   projectName: string | null;
   completedByName: string | null;
+  completedByAvatar: string | null;
 }
 
 export interface DayLogWithTasks {
@@ -31,7 +32,7 @@ export interface DayLogWithTasks {
 export interface ClientWithProjects {
   client: import("./database").Client;
   projects: import("./database").Project[];
-  members: Array<import("./database").ClientMember & { userName: string }>;
+  members: Array<import("./database").ClientMember & { userName: string; userAvatar: string | null }>;
   invites: import("./database").ClientInvite[];
   currentRole: import("./database").UserRole | null;
 }

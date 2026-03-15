@@ -34,7 +34,10 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
   const unprocessedInboxCount = useStore((s) => s.unprocessedInboxCount);
 
   return (
-    <nav className="flex flex-col gap-1 px-3 py-2">
+    <nav className="flex flex-col gap-0.5 px-3 py-4">
+      <div className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-opacity">
+        Workspace
+      </div>
       {NAV_ITEMS.filter((item) => !("hidden" in item && item.hidden)).map(
         (item) => {
           const isActive =
@@ -47,20 +50,25 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-secondary hover:text-foreground",
               )}
             >
-              <Icon className="h-4 w-4" />
+              <Icon className={cn(
+                "h-4 w-4 shrink-0 transition-transform group-hover:scale-110",
+                isActive ? "text-primary-foreground" : "text-muted-foreground/70"
+              )} />
               <span className="flex-1">{item.label}</span>
               {"hasBadge" in item && unprocessedInboxCount > 0 && (
                 <Badge
                   variant="secondary"
                   className={cn(
-                    "h-5 min-w-5 justify-center px-1.5 text-xs",
-                    isActive && "bg-primary-foreground/20 text-primary-foreground",
+                    "h-5 min-w-5 justify-center px-1.5 text-[10px] font-bold",
+                    isActive 
+                      ? "bg-primary-foreground/20 text-primary-foreground border-none" 
+                      : "bg-primary/10 text-primary border-none",
                   )}
                 >
                   {unprocessedInboxCount}
@@ -76,13 +84,13 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden h-screen w-52 flex-col border-r bg-card lg:flex">
-      <div className="flex h-14 items-center border-b px-5">
+    <aside className="hidden h-screen w-64 flex-col border-r bg-card lg:flex">
+      <div className="flex h-16 items-center border-b px-6">
         <Link href="/daily" className="flex items-center">
-          <img src="/assets/flowlog.png" alt="FlowLog" className="h-11 w-auto object-contain" />
+          <img src="/assets/flowlog.png" alt="FlowLog" className="h-10 w-auto object-contain" />
         </Link>
       </div>
-      <div className="flex-1 overflow-y-auto pt-2">
+      <div className="flex-1 overflow-y-auto">
         <SidebarNav />
       </div>
     </aside>
