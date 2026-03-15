@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { CheckCircle2, XCircle, Loader2, Building2, UserPlus } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { getInviteByToken, acceptInvite, declineInvite, getSessionUser, getClientById } from "@/lib/api";
+import { getInviteByToken, acceptInvite, declineInvite, getSessionUser, getClientById, logoutSupabase } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ClientInvite, Client, User } from "@/types";
@@ -13,11 +13,13 @@ export default function AcceptInvitePage() {
   const params = useParams<{ token: string }>();
   const router = useRouter();
   const [invite, setInvite] = useState<ClientInvite | null>(null);
-  const [client, setClient] = useState<Client | null>(null);
+  const [clientName, setClientName] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -31,18 +33,16 @@ export default function AcceptInvitePage() {
 
         if (cancelled) return;
 
-        if (!inviteData) {
+        if (!inviteData || !inviteData.invite) {
           setError("This invitation is invalid or has already been used.");
           setLoading(false);
           return;
         }
 
-        setInvite(inviteData);
+        setInvite(inviteData.invite);
+        setClientName(inviteData.client_name);
+        setProjectName(inviteData.project_name);
         setCurrentUser(userData);
-
-        const clientData = await getClientById(inviteData.client_id);
-        if (cancelled) return;
-        setClient(clientData);
         
       } catch (err: any) {
         if (!cancelled) setError(err.message || "Failed to load invitation.");
@@ -67,7 +67,7 @@ export default function AcceptInvitePage() {
     setProcessing(true);
     try {
       await acceptInvite(invite.id, currentUser.id);
-      router.push(`/clients/${invite.client_id}?accepted=true`);
+      setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Failed to accept invitation.");
       setProcessing(false);
@@ -94,7 +94,46 @@ export default function AcceptInvitePage() {
     );
   }
 
-  if (error || !invite || !client) {
+  if (success && invite) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4 bg-muted/30">
+        <Card className="w-full max-w-md shadow-2xl border-green-500/20">
+          <CardHeader>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500/10">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-center text-2xl font-bold">Successfully Joined!</CardTitle>
+            <CardDescription className="text-center">
+              You are now a member of <span className="font-bold text-foreground">{projectName || clientName}</span>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center pb-6">
+            <p className="text-sm text-muted-foreground">
+              You can now collaborate on tasks, projects, and more.
+            </p>
+          </CardContent>
+          <CardFooter>
+            <Button 
+              className="w-full h-11" 
+              onClick={() => {
+                if (invite.project_id) {
+                  router.push(`/projects/${invite.project_id}`);
+                } else if (invite.client_id) {
+                  router.push(`/clients/${invite.client_id}`);
+                } else {
+                  router.push("/");
+                }
+              }}
+            >
+              Go to {projectName ? "Project" : "Dashboard"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !invite) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md border-destructive/20 shadow-xl">
@@ -128,8 +167,17 @@ export default function AcceptInvitePage() {
             <UserPlus className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-2xl">You're invited!</CardTitle>
-          <CardDescription>
-            Join <span className="font-semibold text-foreground">{client.name}</span> as a <span className="capitalize">{invite.role}</span>
+          <CardDescription className="flex flex-col gap-1">
+            <span>You have been invited to join:</span>
+            <span className="font-bold text-foreground text-lg">
+              {projectName || clientName}
+            </span>
+            <span className="text-xs">
+              {projectName ? `(Project under ${clientName})` : "(Full Client Access)"}
+            </span>
+            <span className="mt-2">
+              Role: <span className="capitalize font-medium text-primary">{invite.role}</span>
+            </span>
           </CardDescription>
         </CardHeader>
         
@@ -191,7 +239,12 @@ export default function AcceptInvitePage() {
             <Button 
               variant="outline" 
               className="w-full text-xs"
-              onClick={() => router.push("/login")}
+              onClick={async () => {
+                await logoutSupabase();
+                // We clear store in handleLogout usually, but here we can just reload or redirect
+                router.push(`/login?redirectTo=/invite/${params.token}`);
+                router.refresh(); // Ensure session state is cleared
+              }}
             >
               Sign out & Switch Account
             </Button>

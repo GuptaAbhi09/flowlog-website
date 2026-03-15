@@ -79,12 +79,12 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">W</span>
+          <div className="mx-auto mb-4 flex h-16 w-auto items-center justify-center">
+            <img src="/assets/flowlog.png" alt="FlowLog" className="h-12 w-auto object-contain" />
           </div>
           <CardTitle className="text-2xl">Create account</CardTitle>
           <CardDescription>
-            Register for Work OS
+            Register for FlowLog
           </CardDescription>
         </CardHeader>
         <CardContent>

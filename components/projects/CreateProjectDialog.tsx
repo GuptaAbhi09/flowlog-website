@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { createProject, getClients } from "@/lib/api";
 import type { Client, Project, ProjectStatus } from "@/types";
+import { useStore } from "@/store/useStore";
 
 interface CreateProjectDialogProps {
   /** If set, client is fixed and client selector is hidden */
@@ -34,6 +35,7 @@ export function CreateProjectDialog({
   onOpenChange,
   onCreated,
 }: CreateProjectDialogProps) {
+  const user = useStore(s => s.user);
   const [clients, setClients] = useState<Client[]>([]);
   const [clientId, setClientId] = useState(fixedClientId ?? "");
   const [name, setName] = useState("");
@@ -60,13 +62,18 @@ export function CreateProjectDialog({
       setError("Name is required.");
       return;
     }
-    if (!cid) {
-      setError("Please select a client.");
+    if (!user) {
+      setError("You must be logged in.");
       return;
     }
     setSubmitting(true);
     try {
-      const project = await createProject({ client_id: cid, name: trimmed, status });
+      const project = await createProject({ 
+        client_id: cid || null, 
+        user_id: user.id,
+        name: trimmed, 
+        status 
+      });
       onOpenChange(false);
       onCreated?.(project);
     } catch (err) {
@@ -87,7 +94,7 @@ export function CreateProjectDialog({
             {!fixedClientId && (
               <div className="grid gap-2">
                 <label htmlFor="project-client" className="text-sm font-medium">
-                  Client
+                  Client (Optional)
                 </label>
                 <select
                   id="project-client"
@@ -95,7 +102,7 @@ export function CreateProjectDialog({
                   onChange={(e) => setClientId(e.target.value)}
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 >
-                  <option value="">Select client…</option>
+                  <option value="">No Client (Personal)</option>
                   {clients.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.name}

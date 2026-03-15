@@ -71,11 +71,17 @@ export async function getCompletedTasksByProject(
 export async function createTaskFromInput(
   rawInput: string,
   userId: string,
-  dayLogId: string,
+  dayLogId?: string,
   source: Task["source"] = "sod",
   context?: { clientId?: string; projectId?: string },
 ): Promise<Task> {
   const parsed = parseTaskInput(rawInput);
+  
+  let targetDayLogId = dayLogId;
+  if (!targetDayLogId) {
+    const log = await getOrCreateTodayLog(userId);
+    targetDayLogId = log.id;
+  }
 
   let client_id = context?.clientId ?? null;
   let project_id = context?.projectId ?? null;
@@ -92,7 +98,7 @@ export async function createTaskFromInput(
   const { data: existing } = await supabase
     .from("tasks")
     .select("position")
-    .eq("day_log_id", dayLogId)
+    .eq("day_log_id", targetDayLogId)
     .order("position", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -103,7 +109,7 @@ export async function createTaskFromInput(
     .from("tasks")
     .insert({
       content: parsed.content, // Use parsed content (tags removed)
-      day_log_id: dayLogId,
+      day_log_id: targetDayLogId,
       user_id: userId,
       client_id,
       project_id,

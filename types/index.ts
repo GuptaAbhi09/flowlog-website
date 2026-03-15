@@ -32,6 +32,7 @@ export interface ClientWithProjects {
   client: import("./database").Client;
   projects: import("./database").Project[];
   members: Array<import("./database").ClientMember & { userName: string }>;
+  invites: import("./database").ClientInvite[];
   currentRole: import("./database").UserRole | null;
 }
 
@@ -39,6 +40,8 @@ export interface ProjectWithTasks {
   project: import("./database").Project;
   clientName: string;
   tasks: TaskWithDetails[];
+  pendingTasks: import("./database").Task[];
+  clientInfo?: ClientWithProjects;
 }
 
 export interface TimelineEntry {

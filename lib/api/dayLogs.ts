@@ -33,7 +33,14 @@ export async function getOrCreateTodayLog(userId: string): Promise<DayLog> {
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Handle race condition: Another concurrent request might have created it
+    if (error.code === "23505") {
+      const concurrentExisting = await getDayLogByDate(userId, today);
+      if (concurrentExisting) return concurrentExisting;
+    }
+    throw new Error(error.message);
+  }
   return data as DayLog;
 }
 
@@ -74,6 +81,12 @@ export async function createDayLogForDate(
     .select()
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.code === "23505") {
+      const concurrentExisting = await getDayLogByDate(userId, date);
+      if (concurrentExisting) return concurrentExisting;
+    }
+    throw new Error(error.message);
+  }
   return data as DayLog;
 }

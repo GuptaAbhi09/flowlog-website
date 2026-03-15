@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 
 const NAV_ITEMS = [
   { label: "Daily", href: "/daily", icon: CalendarDays },
-  { label: "Clients", href: "/clients", icon: Building2 },
+  { label: "Client Projects", href: "/clients", icon: Building2 },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Meetings", href: "/meetings", icon: MessageSquare },
   { label: "Inbox", href: "/inbox", icon: Inbox, hasBadge: true },
@@ -76,13 +76,10 @@ export function SidebarNav({ onNavigate }: SidebarNavProps) {
 
 export function Sidebar() {
   return (
-    <aside className="hidden h-screen w-60 flex-col border-r bg-card lg:flex">
+    <aside className="hidden h-screen w-52 flex-col border-r bg-card lg:flex">
       <div className="flex h-14 items-center border-b px-5">
-        <Link href="/daily" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-            <span className="text-xs font-bold text-primary-foreground">W</span>
-          </div>
-          <span className="text-lg font-semibold tracking-tight">Work OS</span>
+        <Link href="/daily" className="flex items-center">
+          <img src="/assets/flowlog.png" alt="FlowLog" className="h-11 w-auto object-contain" />
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto pt-2">

@@ -38,7 +38,7 @@ export function ClientProjects({ projects }: ClientProjectsProps) {
       {projects.map((project) => (
         <Link
           key={project.id}
-          href={`/projects/${project.id}`}
+          href={`/clients/${project.client_id}/projects/${project.id}`}
           className="flex items-center gap-3 px-1 py-3 transition-colors hover:bg-accent/50 rounded-md"
         >
           <FolderKanban className="h-4 w-4 shrink-0 text-muted-foreground" />

@@ -36,7 +36,8 @@ export interface Client {
 
 export interface ClientMember {
   id: string;
-  client_id: string;
+  client_id: string | null;
+  project_id: string | null;
   user_id: string;
   role: UserRole;
   added_at: string;
@@ -44,7 +45,8 @@ export interface ClientMember {
 
 export interface Project {
   id: string;
-  client_id: string;
+  client_id: string | null;
+  user_id: string; // Primary owner
   name: string;
   status: ProjectStatus;
   created_at: string;
@@ -107,7 +109,8 @@ export type InviteStatus = "pending" | "accepted" | "declined";
 
 export interface ClientInvite {
   id: string;
-  client_id: string;
+  client_id: string | null;
+  project_id: string | null;
   email: string;
   token: string;
   invited_by: string;

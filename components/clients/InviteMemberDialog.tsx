@@ -23,7 +23,8 @@ import { createInvite, getSessionUser } from "@/lib/api";
 import type { UserRole } from "@/types";
 
 interface InviteMemberDialogProps {
-  clientId: string;
+  clientId?: string;
+  projectId?: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onInvited?: () => void;
@@ -31,6 +32,7 @@ interface InviteMemberDialogProps {
 
 export function InviteMemberDialog({
   clientId,
+  projectId,
   open,
   onOpenChange,
   onInvited,
@@ -42,11 +44,14 @@ export function InviteMemberDialog({
   const [success, setSuccess] = useState(false);
   const [inviteLink, setInviteLink] = useState("");
 
+  const [copied, setCopied] = useState(false);
+
   async function handleInvite() {
     if (!email.trim()) return;
     setLoading(true);
     setError(null);
     setSuccess(false);
+    setCopied(false);
 
     try {
       const user = await getSessionUser();
@@ -56,7 +61,8 @@ export function InviteMemberDialog({
                     Math.random().toString(36).substring(2, 10);
 
       await createInvite({
-        client_id: clientId,
+        client_id: clientId || null,
+        project_id: projectId || null,
         email: email.trim(),
         role,
         token,
@@ -76,12 +82,19 @@ export function InviteMemberDialog({
     }
   }
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
     <Dialog open={open} onOpenChange={(o) => {
       onOpenChange(o);
       if (!o) {
         setSuccess(false);
         setInviteLink("");
+        setCopied(false);
       }
     }}>
       <DialogContent className="sm:max-w-[425px]">
@@ -112,15 +125,20 @@ export function InviteMemberDialog({
                 <Input 
                   readOnly 
                   value={inviteLink} 
-                  className="bg-muted text-xs font-mono"
+                  className="bg-muted text-xs font-mono select-all"
                 />
                 <Button 
                   size="sm" 
-                  onClick={() => {
-                    navigator.clipboard.writeText(inviteLink);
-                  }}
+                  variant={copied ? "default" : "outline"}
+                  className={copied ? "bg-green-600 hover:bg-green-700 text-white transition-all" : ""}
+                  onClick={handleCopy}
                 >
-                  Copy
+                  {copied ? (
+                    <>
+                      <CheckCircle2 className="mr-1 h-3 w-3" />
+                      Copied!
+                    </>
+                  ) : "Copy"}
                 </Button>
               </div>
             </div>

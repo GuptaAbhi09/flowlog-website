@@ -94,12 +94,15 @@ export async function getClientDetail(
 
   if (projError) throw new Error(projError.message);
 
-  const { data: membersRows, error: memError } = await supabase
-    .from("client_members")
-    .select("*")
-    .eq("client_id", clientId);
+  const [membersRowsRes, invitesRowsRes] = await Promise.all([
+    supabase.from("client_members").select("*").eq("client_id", clientId),
+    supabase.from("client_invites").select("*").eq("client_id", clientId).eq("status", "pending")
+  ]);
 
-  if (memError) throw new Error(memError.message);
+  const membersRows = membersRowsRes.data;
+  const invites = (invitesRowsRes.data ?? []) as any[];
+
+  if (membersRowsRes.error) throw new Error(membersRowsRes.error.message);
 
   const members = await Promise.all(
     (membersRows ?? []).map(async (m) => {
@@ -109,12 +112,35 @@ export async function getClientDetail(
   );
 
   const { data: { user: authUser } } = await supabase.auth.getUser();
-  const currentRole = membersRows?.find(m => m.user_id === authUser?.id)?.role ?? null;
+  
+  // If the owner isn't in members yet, add them for display
+  if (client.created_by && !members.find(m => m.user_id === client.created_by)) {
+    const creator = await getCurrentUser(client.created_by);
+    if (creator) {
+      members.unshift({
+        id: "owner-ref",
+        client_id: client.id,
+        project_id: null,
+        user_id: client.created_by,
+        role: "owner",
+        added_at: client.created_at,
+        userName: creator.name
+      });
+    }
+  }
+
+  let currentRole = membersRows?.find(m => m.user_id === authUser?.id)?.role ?? null;
+  
+  // If the user created the client, they are an owner even if not explicitly in client_members
+  if (!currentRole && client.created_by === authUser?.id) {
+    currentRole = "owner";
+  }
 
   return {
     client: client as Client,
     projects: (clientProjects ?? []) as ClientWithProjects["projects"],
     members,
+    invites,
     currentRole,
   };
 }
@@ -148,4 +174,13 @@ export async function getClientActivity(
   return Array.from(grouped.entries())
     .map(([date, tasks]) => ({ date, tasks }))
     .sort((a, b) => b.date.localeCompare(a.date));
+}
+
+/** Delete a client and all its associated data. */
+export async function deleteClient(clientId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("clients")
+    .delete()
+    .eq("id", clientId);
+  return !error;
 }

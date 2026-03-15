@@ -43,7 +43,7 @@ export default function ClientsPage() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Clients</h1>
+          <h1 className="text-2xl font-bold">Client Projects</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {clients.length} client{clients.length !== 1 ? "s" : ""}
           </p>

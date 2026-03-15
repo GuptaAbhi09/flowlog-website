@@ -60,11 +60,8 @@ export function Header() {
         </Button>
 
         {/* Mobile logo */}
-        <Link href="/daily" className="flex items-center gap-2 lg:hidden">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-            <span className="text-xs font-bold text-primary-foreground">W</span>
-          </div>
-          <span className="font-semibold">Work OS</span>
+        <Link href="/daily" className="flex items-center lg:hidden">
+          <img src="/assets/flowlog.png" alt="FlowLog" className="h-9 w-auto object-contain" />
         </Link>
 
         <div className="flex-1" />
@@ -108,15 +105,10 @@ export function Header() {
 
       {/* Mobile sidebar sheet */}
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-60 p-0">
+        <SheetContent side="left" className="w-52 p-0">
           <SheetHeader className="border-b px-5 py-4">
-            <SheetTitle className="flex items-center gap-2 text-left">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-                <span className="text-xs font-bold text-primary-foreground">
-                  W
-                </span>
-              </div>
-              Work OS
+            <SheetTitle className="flex items-center text-left">
+              <img src="/assets/flowlog.png" alt="FlowLog" className="h-10 w-auto object-contain" />
             </SheetTitle>
           </SheetHeader>
           <div className="pt-2">

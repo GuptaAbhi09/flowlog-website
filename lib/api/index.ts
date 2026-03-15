@@ -51,6 +51,7 @@ export {
   updateClient,
   addClientMember,
   removeClientMember,
+  deleteClient,
 } from "./clients";
 
 // Projects
@@ -60,6 +61,7 @@ export {
   getProjectDetail,
   createProject,
   updateProject,
+  deleteProject,
 } from "./projects";
 
 // Meetings
@@ -88,6 +90,8 @@ export {
   createInvite,
   getInviteByToken,
   getInvitesByClient,
+  getInvitesByProject,
   acceptInvite,
   declineInvite,
+  cancelInvite,
 } from "./invites";
