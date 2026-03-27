@@ -7,6 +7,7 @@ import {
   Building2,
   FolderKanban,
   MessageSquare,
+  FileText,
   Inbox,
   Clock,
   Settings,
@@ -14,12 +15,14 @@ import {
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
 import { Badge } from "@/components/ui/badge";
+import { AppLogo } from "@/components/layout/AppLogo";
 
 const NAV_ITEMS = [
   { label: "Daily", href: "/daily", icon: CalendarDays },
   { label: "Client Projects", href: "/clients", icon: Building2 },
   { label: "Projects", href: "/projects", icon: FolderKanban },
   { label: "Meetings", href: "/meetings", icon: MessageSquare },
+  { label: "Client Updates", href: "/client-updates", icon: FileText },
   { label: "Inbox", href: "/inbox", icon: Inbox, hasBadge: true },
   { label: "Timeline", href: "/timeline", icon: Clock },
   { label: "Settings", href: "/settings", icon: Settings },
@@ -87,7 +90,7 @@ export function Sidebar() {
     <aside className="hidden h-screen w-64 flex-col border-r bg-card lg:flex">
       <div className="flex h-16 items-center border-b px-6">
         <Link href="/daily" className="flex items-center">
-          <img src="/assets/flowlog.png" alt="FlowLog" className="h-10 w-auto object-contain" />
+          <AppLogo size="sm" />
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto">

@@ -95,3 +95,12 @@ export {
   declineInvite,
   cancelInvite,
 } from "./invites";
+
+// Client Updates
+export {
+  createClientUpdate,
+  getClientUpdates,
+  updateClientUpdate,
+  deleteClientUpdate,
+  reorderClientUpdates,
+} from "./clientUpdates";

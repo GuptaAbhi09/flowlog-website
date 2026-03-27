@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useStore } from "@/store/useStore";
 import { login } from "@/lib/api";
+import { AppLogo } from "@/components/layout/AppLogo";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -51,12 +52,10 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-auto items-center justify-center">
-            <img src="/assets/flowlog.png" alt="FlowLog" className="h-12 w-auto object-contain" />
-          </div>
-          <CardTitle className="text-2xl">FlowLog</CardTitle>
+          <AppLogo className="mb-4" />
+          <CardTitle className="text-2xl font-bold tracking-tight">Welcome Back</CardTitle>
           <CardDescription>
-            Sign in to FlowLog
+            Sign in to your account to continue
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -166,3 +166,15 @@ export type UpdateProject = Partial<Pick<Project, "name" | "status">>;
 export type UpdateMeeting = Partial<Pick<Meeting, "title" | "notes" | "client_id">>;
 
 export type UpdateInboxItem = Partial<Pick<InboxItem, "content" | "is_processed">>;
+
+export interface ClientUpdate {
+  id: string;
+  user_id: string;
+  client_name: string;
+  last_update: string;
+  next_steps: string;
+  position: number;
+  created_at: string;
+}
+
+export type CreateClientUpdate = Omit<ClientUpdate, "id" | "created_at">;

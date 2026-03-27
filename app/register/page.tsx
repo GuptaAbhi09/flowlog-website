@@ -16,6 +16,7 @@ import { useStore } from "@/store/useStore";
 import { signUp } from "@/lib/api";
 import { AvatarUpload } from "@/components/profile/AvatarUpload";
 import { CheckCircle2, ArrowRight } from "lucide-react";
+import { AppLogo } from "@/components/layout/AppLogo";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -113,12 +114,10 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-auto items-center justify-center">
-            <img src="/assets/flowlog.png" alt="FlowLog" className="h-12 w-auto object-contain" />
-          </div>
-          <CardTitle className="text-2xl">Create account</CardTitle>
+          <AppLogo className="mb-4" />
+          <CardTitle className="text-2xl font-bold tracking-tight">Create account</CardTitle>
           <CardDescription>
-            Register for FlowLog
+            Join our platform to manage your work effectively
           </CardDescription>
         </CardHeader>
         <CardContent>
