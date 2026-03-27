@@ -177,4 +177,4 @@ export interface ClientUpdate {
   created_at: string;
 }
 
-export type CreateClientUpdate = Omit<ClientUpdate, "id" | "created_at">;
+export type CreateClientUpdate = Omit<ClientUpdate, "id" | "created_at" | "position">;
