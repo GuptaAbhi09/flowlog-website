@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabaseClient";
 import Fuse from "fuse.js";
 import { parseTaskInput as parseTags } from "./taskParser";
-import type { TaskPriority, Client, Project, IntelligentParsedResult } from "@/types";
+import type { Client, Project, IntelligentParsedResult } from "@/types";
 
 /**
  * Normalizes text for matching by removing punctuation and extra whitespace.
@@ -87,8 +87,8 @@ export function parseTaskInputLogic(
   let matchedClientName: string | null = null;
   let matchedProjectName: string | null = null;
 
-  const rejectedClients: any[] = [];
-  const rejectedProjects: any[] = [];
+  const rejectedClients: { name: string; score: number; reason: string }[] = [];
+  const rejectedProjects: { name: string; score: number; reason: string }[] = [];
 
   // --- Step 1: Explicit Client Tag (@client) ---
   if (tagResult.clientName) {
@@ -252,7 +252,6 @@ export function parseTaskInputLogic(
  */
 export async function parseTaskInput(
   input: string,
-  userId: string
 ): Promise<IntelligentParsedResult> {
   const [clientsRes, projectsRes] = await Promise.all([
     supabase.from("clients").select("*"),

@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Plus, Sparkles, Building2, FolderKanban, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { parseTaskInput as parseTags } from "@/lib/parsers/taskParser";
 import { parseTaskInputLogic } from "@/lib/parsers/intelligentTaskParser";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -52,7 +51,6 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
     getProjects().then(setAllProjects).catch(() => {});
   }, []);
 
-  const parsedTags = value.trim() ? parseTags(value) : null;
   const intelligentParsed = value.trim() ? parseTaskInputLogic(value, allClients, allProjects) : null;
 
   const handleInputChange = (val: string) => {

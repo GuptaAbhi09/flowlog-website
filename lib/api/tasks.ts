@@ -1,6 +1,5 @@
 import type { Task, CreateTask, UpdateTask } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
-import { parseTaskInput as parseTags } from "@/lib/parsers/taskParser";
 import { parseTaskInput as intelligentParse } from "@/lib/parsers/intelligentTaskParser";
 import { getClientByName } from "./clients";
 import { getProjectByName } from "./projects";
@@ -84,7 +83,7 @@ export async function createTaskFromInput(
   source: Task["source"] = "sod",
   context?: { clientId?: string; projectId?: string },
 ): Promise<Task> {
-  const result = await intelligentParse(rawInput, userId);
+  const result = await intelligentParse(rawInput);
   const parsed = {
     content: result.content,
     clientName: result.clientName,
@@ -247,17 +246,6 @@ export async function rollPendingToToday(
   userId: string,
 ): Promise<Task[]> {
   const todayLog = await getOrCreateTodayLog(userId);
-
-  // Get current max position in today's log to append
-  const { data: existing } = await supabase
-    .from("tasks")
-    .select("position")
-    .eq("day_log_id", todayLog.id)
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  let nextPos = ((existing as { position?: number } | null)?.position ?? -1) + 1;
 
   // Fetch pending tasks from the source log
   const { data: pending, error: fetchErr } = await supabase

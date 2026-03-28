@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Menu, LogOut, User as UserIcon, BookOpen } from "lucide-react";
@@ -68,7 +69,14 @@ export function Header() {
 
         {/* Mobile logo */}
         <Link href="/daily" className="flex items-center lg:hidden">
-          <img src="/assets/flowlog.png" alt="FlowLog" className="h-9 w-auto object-contain" />
+          <Image
+            src="/assets/flowlog.png"
+            alt="FlowLog"
+            width={140}
+            height={36}
+            className="h-9 w-auto object-contain"
+            priority
+          />
         </Link>
 
         <div className="flex-1" />
@@ -150,7 +158,13 @@ export function Header() {
         <SheetContent side="left" className="w-[280px] p-0">
           <SheetHeader className="border-b h-16 flex items-center px-6">
             <SheetTitle className="flex items-center text-left">
-              <img src="/assets/flowlog.png" alt="FlowLog" className="h-10 w-auto object-contain" />
+              <Image
+                src="/assets/flowlog.png"
+                alt="FlowLog"
+                width={160}
+                height={40}
+                className="h-10 w-auto object-contain"
+              />
             </SheetTitle>
           </SheetHeader>
           <div className="overflow-y-auto h-[calc(100vh-4rem)]">

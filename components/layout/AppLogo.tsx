@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface AppLogoProps {
@@ -16,22 +17,20 @@ export function AppLogo({ className, size = "md" }: AppLogoProps) {
 
   return (
     <div className={cn("flex items-center justify-center overflow-hidden", sizeClasses[size], className)}>
-      {/* Light Mode Logo */}
-      <img
+      <Image
         src="/assets/flowlog.png"
         alt="FlowLog"
+        width={200}
+        height={64}
         className="h-full w-auto object-contain dark:hidden"
+        priority
       />
-      {/* Dark Mode Logo (Placeholder for now, same as light until you provide one) */}
-      <img
-        src="/assets/flowlog-dark.png" // User should provide this file
+      <Image
+        src="/assets/flowlog-dark.png"
         alt="FlowLog"
+        width={200}
+        height={64}
         className="hidden h-full w-auto object-contain dark:block"
-        onError={(e) => {
-          // Fallback if dark logo doesn't exist yet
-          e.currentTarget.src = "/assets/flowlog.png";
-          e.currentTarget.classList.remove("hidden");
-        }}
       />
     </div>
   );
