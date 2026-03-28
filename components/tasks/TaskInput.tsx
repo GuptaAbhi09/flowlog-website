@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Plus, Building2, FolderKanban, AlertCircle } from "lucide-react";
+import { Plus, Sparkles, Building2, FolderKanban, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { parseTaskInput } from "@/lib/parsers/taskParser";
+import { parseTaskInput as parseTags } from "@/lib/parsers/taskParser";
+import { parseTaskInputLogic } from "@/lib/parsers/intelligentTaskParser";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { getClients, getProjects } from "@/lib/api";
@@ -51,7 +52,8 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
     getProjects().then(setAllProjects).catch(() => {});
   }, []);
 
-  const parsed = value.trim() ? parseTaskInput(value) : null;
+  const parsedTags = value.trim() ? parseTags(value) : null;
+  const intelligentParsed = value.trim() ? parseTaskInputLogic(value, allClients, allProjects) : null;
 
   const handleInputChange = (val: string) => {
     setValue(val);
@@ -181,29 +183,47 @@ export function TaskInput({ onSubmit, clientId, projectId, disabled, placeholder
           </Button>
         </div>
 
-        {parsed && (parsed.clientName || parsed.projectName || parsed.priority) ? (
+        {intelligentParsed && (intelligentParsed.clientName || intelligentParsed.projectName || intelligentParsed.priority) ? (
           <div className="flex flex-wrap items-center gap-1.5 border-t pt-1.5 px-2 animate-in slide-in-from-top-1">
-            {parsed.clientName && (
-              <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 bg-primary/5 text-primary border-none">
-                <Building2 className="mr-1 h-3 w-3" />
-                {parsed.clientName}
+            {intelligentParsed.clientName && (
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 border-none",
+                  intelligentParsed.matchDetails.client.confidence < 1 ? "bg-primary/5 text-primary/60 italic" : "bg-primary/5 text-primary"
+                )}
+              >
+                {intelligentParsed.matchDetails.client.confidence < 1 ? <Sparkles className="mr-1 h-3 w-3" /> : <Building2 className="mr-1 h-3 w-3" />}
+                {intelligentParsed.clientName}
+                {intelligentParsed.matchDetails.client.confidence < 1 && (
+                  <span className="ml-1 opacity-50 text-[8px]">{Math.round(intelligentParsed.matchDetails.client.confidence * 100)}%</span>
+                )}
               </Badge>
             )}
-            {parsed.projectName && (
-              <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 bg-blue-50 text-blue-600 border-none">
-                <FolderKanban className="mr-1 h-3 w-3" />
-                {parsed.projectName}
+            {intelligentParsed.projectName && (
+              <Badge 
+                variant="secondary" 
+                className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 border-none",
+                  intelligentParsed.matchDetails.project.confidence < 1 ? "bg-blue-50 text-blue-400 italic" : "bg-blue-50 text-blue-600"
+                )}
+              >
+                {intelligentParsed.matchDetails.project.confidence < 1 ? <Sparkles className="mr-1 h-3 w-3" /> : <FolderKanban className="mr-1 h-3 w-3" />}
+                {intelligentParsed.projectName}
+                {intelligentParsed.matchDetails.project.confidence < 1 && (
+                  <span className="ml-1 opacity-50 text-[8px]">{Math.round(intelligentParsed.matchDetails.project.confidence * 100)}%</span>
+                )}
               </Badge>
             )}
-            {parsed.priority && (
+            {intelligentParsed.priority && (
               <Badge
                 className={cn(
                   "text-[10px] font-bold uppercase tracking-wider py-0 px-2 h-5 border-none",
-                  PRIORITY_COLORS[parsed.priority],
+                  PRIORITY_COLORS[intelligentParsed.priority],
                 )}
               >
                 <AlertCircle className="mr-1 h-3 w-3" />
-                {parsed.priority}
+                {intelligentParsed.priority}
               </Badge>
             )}
           </div>

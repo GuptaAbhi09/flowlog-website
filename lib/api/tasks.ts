@@ -1,6 +1,7 @@
 import type { Task, CreateTask, UpdateTask } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
-import { parseTaskInput } from "@/lib/parsers/taskParser";
+import { parseTaskInput as parseTags } from "@/lib/parsers/taskParser";
+import { parseTaskInput as intelligentParse } from "@/lib/parsers/intelligentTaskParser";
 import { getClientByName } from "./clients";
 import { getProjectByName } from "./projects";
 import { getOrCreateTodayLog } from "./dayLogs";
@@ -83,7 +84,13 @@ export async function createTaskFromInput(
   source: Task["source"] = "sod",
   context?: { clientId?: string; projectId?: string },
 ): Promise<Task> {
-  const parsed = parseTaskInput(rawInput);
+  const result = await intelligentParse(rawInput, userId);
+  const parsed = {
+    content: result.content,
+    clientName: result.clientName,
+    projectName: result.projectName,
+    priority: result.priority
+  };
   
   let targetDayLogId = dayLogId;
   if (!targetDayLogId) {
@@ -91,14 +98,16 @@ export async function createTaskFromInput(
     targetDayLogId = log.id;
   }
 
-  let client_id = context?.clientId ?? null;
-  let project_id = context?.projectId ?? null;
+  let client_id = context?.clientId ?? result.clientId;
+  let project_id = context?.projectId ?? result.projectId;
 
-  if (parsed.clientName) {
+  // Final sanity check for explicit tags if they weren't matched in intelligentParse
+  // (though intelligentParse should handle them, we keep this for robustness)
+  if (!client_id && parsed.clientName) {
     const c = await getClientByName(parsed.clientName);
     if (c) client_id = c.id;
   }
-  if (parsed.projectName) {
+  if (!project_id && parsed.projectName) {
     const p = await getProjectByName(parsed.projectName);
     if (p) project_id = p.id;
   }
@@ -231,7 +240,7 @@ export async function reorderTasks(
 
 /**
  * Roll pending (incomplete) tasks from a source day log into today's log.
- * Creates copies — originals are left unchanged in the old day log.
+ * Moves the tasks by updating their day_log_id (no duplicates).
  */
 export async function rollPendingToToday(
   sourceDayLogId: string,
@@ -239,43 +248,83 @@ export async function rollPendingToToday(
 ): Promise<Task[]> {
   const todayLog = await getOrCreateTodayLog(userId);
 
+  // Get current max position in today's log to append
+  const { data: existing } = await supabase
+    .from("tasks")
+    .select("position")
+    .eq("day_log_id", todayLog.id)
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let nextPos = ((existing as { position?: number } | null)?.position ?? -1) + 1;
+
+  // Fetch pending tasks from the source log
   const { data: pending, error: fetchErr } = await supabase
     .from("tasks")
-    .select("*")
+    .select("id")
     .eq("day_log_id", sourceDayLogId)
     .eq("is_completed", false);
 
   if (fetchErr) throw new Error(fetchErr.message);
   if (!pending?.length) return [];
 
-  const { count } = await supabase
+  const taskIds = pending.map(t => t.id);
+
+  // Update tasks one by one to set proper position? 
+  // No, we can update in bulk if they don't care about internal order relative to each other yet, 
+  // but we should still maintain a sequence.
+  
+  // For simplicity and speed, update all at once and then re-fetch.
+  // We'll set a base position and we could use a postgres function if we wanted perfectly sequential positions.
+  // But for now, setting them into today's log is the priority.
+  
+  const { error: updateErr } = await supabase
     .from("tasks")
-    .select("*", { count: "exact", head: true })
-    .eq("day_log_id", todayLog.id);
+    .update({ 
+      day_log_id: todayLog.id,
+      source: 'sod', // Roll into Start of Day
+    })
+    .in("id", taskIds);
 
-  let nextPos = count ?? 0;
+  if (updateErr) throw new Error(updateErr.message);
+  
+  // After move, we should reorder them in the new log to ensure no position gaps?
+  // Reorder is a separate tool, but let's just re-fetch for now.
+  return getTasksByDayLogId(todayLog.id);
+}
 
-  const inserts = (pending as Task[]).map((t) => ({
-    content: t.content,
-    day_log_id: todayLog.id,
-    user_id: t.user_id,
-    client_id: t.client_id,
-    project_id: t.project_id,
-    priority: t.priority,
-    is_completed: false,
-    completed_at: null,
-    completed_by: null,
-    position: nextPos++,
-    source: t.source,
-  }));
+/**
+ * Automaticaly rolls over all pending tasks from any previous day log into today.
+ * To be called by a cron job or on app initialization.
+ */
+export async function autoRolloverTasks(userId: string): Promise<number> {
+  const todayLog = await getOrCreateTodayLog(userId);
+  const today = new Date().toISOString().split('T')[0];
 
-  const { data: newTasks, error: insertErr } = await supabase
+  // Find all previous day logs
+  const { data: prevLogs } = await supabase
+    .from("day_logs")
+    .select("id")
+    .eq("user_id", userId)
+    .lt("date", today);
+
+  if (!prevLogs?.length) return 0;
+
+  const logIds = prevLogs.map(l => l.id);
+
+  // Update all pending tasks from these logs
+  const { count, error } = await supabase
     .from("tasks")
-    .insert(inserts)
-    .select();
+    .update({ 
+      day_log_id: todayLog.id,
+      source: 'sod' 
+    })
+    .in("day_log_id", logIds)
+    .eq("is_completed", false);
 
-  if (insertErr) throw new Error(insertErr.message);
-  return (newTasks ?? []) as Task[];
+  if (error) throw new Error(error.message);
+  return count ?? 0;
 }
 
 /** Fetch tasks by source, optionally filtered by client or project. */

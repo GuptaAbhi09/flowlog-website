@@ -214,7 +214,6 @@ export default function DailyPage() {
                 <TaskInput onSubmit={handleAddTask} />
               </div>
             )}
-
             <div className="space-y-2">
               <div className="flex items-center justify-between px-1">
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
@@ -231,28 +230,6 @@ export default function DailyPage() {
                 readonly={!isViewingToday}
               />
             </div>
-
-            {!isViewingToday && hasPending && (
-              <Card className="border-primary/20 bg-primary/5">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-semibold text-primary">Pending items found</p>
-                    <p className="text-xs text-muted-foreground">
-                      {tasks.filter((t) => !t.is_completed).length} items remaining from this day.
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="gap-2"
-                    onClick={handleRollPending}
-                    disabled={rolling}
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    {rolling ? "Rolling…" : "Roll to Today"}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
           </TabsContent>
 
           <TabsContent value="eod" className="outline-none">

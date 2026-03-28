@@ -13,6 +13,20 @@ export interface ParsedTask {
   priority: import("./database").TaskPriority | null;
 }
 
+export interface IntelligentParsedResult {
+  clientId: string | null;
+  projectId: string | null;
+  confidence: number;
+  clientName: string | null;
+  projectName: string | null;
+  content: string;
+  priority: import("./database").TaskPriority | null;
+  matchDetails: {
+    client: { id: string | null; name: string | null; confidence: number };
+    project: { id: string | null; name: string | null; confidence: number };
+  };
+}
+
 // ---- Enriched Display Types ------------------------------------------------
 // Joined data used by UI components so we don't scatter lookups everywhere.
 

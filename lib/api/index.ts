@@ -38,6 +38,7 @@ export {
   deleteTask,
   reorderTasks,
   rollPendingToToday,
+  autoRolloverTasks,
   getTasksBySource,
 } from "./tasks";
 
