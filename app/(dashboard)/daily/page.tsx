@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { format, isToday, parseISO } from "date-fns";
-import { CalendarDays, RotateCcw } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import type { DayLog, Task, UpdateTask } from "@/types";
 import {
@@ -14,7 +14,6 @@ import {
   deleteTask,
   updateTask,
   reorderTasks,
-  rollPendingToToday,
   createDayLogForDate,
 } from "@/lib/api";
 import { TaskInput } from "@/components/tasks/TaskInput";
@@ -36,7 +35,6 @@ export default function DailyPage() {
   const [currentLog, setCurrentLog] = useState<DayLog | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rolling, setRolling] = useState(false);
 
   // ---- Data fetching -------------------------------------------------------
 
@@ -115,21 +113,11 @@ export default function DailyPage() {
     await initToday();
   };
 
-  const handleRollPending = async () => {
-    if (!user || !currentLog) return;
-    setRolling(true);
-    try {
-      await rollPendingToToday(currentLog.id, user.id);
-      await initToday();
-    } finally {
-      setRolling(false);
-    }
-  };
+
 
   // ---- Derived state -------------------------------------------------------
 
   const isViewingToday = currentLog ? isToday(parseISO(currentLog.date)) : false;
-  const hasPending = tasks.some((t) => !t.is_completed);
   const dateLabel = currentLog
     ? isViewingToday
       ? "Today"
@@ -231,25 +219,7 @@ export default function DailyPage() {
               />
             </div>
 
-            {!isViewingToday && hasPending && (
-              <Card>
-                <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {tasks.filter((t) => !t.is_completed).length} pending item(s) from this day.
-                  </p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-2 shrink-0"
-                    onClick={handleRollPending}
-                    disabled={rolling}
-                  >
-                    <RotateCcw className="h-3.5 w-3.5" />
-                    {rolling ? "Rolling…" : "Roll pending to today"}
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+
           </TabsContent>
 
           <TabsContent value="eod" className="outline-none">

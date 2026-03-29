@@ -55,10 +55,10 @@ BEGIN
     UPDATE public.tasks t
     SET day_log_id = dl_today.id,
         source = 'sod'
-    FROM public.day_logs dl_today
-    JOIN public.day_logs dl_old 
-      ON t.day_log_id = dl_old.id
-    WHERE t.user_id = dl_today.user_id
+    FROM public.day_logs dl_today,
+         public.day_logs dl_old
+    WHERE t.day_log_id = dl_old.id
+      AND t.user_id = dl_today.user_id
       AND dl_today.date = v_today_date
       AND dl_old.date < v_today_date
       AND t.is_completed = false

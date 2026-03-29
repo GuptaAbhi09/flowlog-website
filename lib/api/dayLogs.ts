@@ -1,7 +1,6 @@
 import type { DayLog } from "@/types";
 import { supabase } from "@/lib/supabaseClient";
 import { todayDateStr } from "./helpers";
-import { autoRolloverTasks } from "./tasks";
 
 /** Get the day log for a specific date, or null if none exists. */
 export async function getDayLogByDate(
@@ -42,11 +41,7 @@ export async function getOrCreateTodayLog(userId: string): Promise<DayLog> {
     throw new Error(error.message);
   }
 
-  // Automation: When today's log is first created, roll over any pending tasks
-  // from previous days logs.
-  await autoRolloverTasks(userId).catch(err => {
-    console.warn("[Auto-Rollover] Error:", err);
-  });
+
 
   return data as DayLog;
 }
