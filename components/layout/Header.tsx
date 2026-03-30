@@ -87,13 +87,13 @@ export function Header() {
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-9 w-9 border rounded-md text-muted-foreground hover:text-primary transition-colors bg-background flex items-center justify-center p-0"
+                className="h-9 px-3 border rounded-md text-muted-foreground hover:text-primary transition-colors bg-background"
                 asChild
               >
-                <Link href="/docs" className="flex items-center justify-center">
-                  <BookOpen className="h-[1.2rem] w-[1.2rem]" />
-                  <span className="sr-only">Documentation</span>
+                <Link href="/docs" className="flex items-center gap-2">
+                  <BookOpen className="h-4 w-4" />
+                  <span className="text-sm font-medium hidden sm:inline-block">Documentation</span>
+                  <span className="sr-only sm:hidden">Documentation</span>
                 </Link>
               </Button>
             </TooltipTrigger>
